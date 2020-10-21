@@ -1,6 +1,5 @@
 package cecs429.index;
 
-
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -9,11 +8,21 @@ import java.io.OutputStream;
 //import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+
+import org.mapdb.BTreeMap;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
+
 import cecs429.index.GapUtils;
 
 public class DiskIndexWriter {
     // docFreq doc ID docTermFreq [pos] docIDAsGap [posGap]
     public static List<Integer> writeIndex(Index indArg, String absPathsArg) {
+               
+        DB db = DBMaker.fileDB("file.db").make();
+        BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING).valueSerializer(Serializer.INTEGER).createOrOpen();
         List<String> lVocab = indArg.getVocabulary();
         List<Integer> byteOffsets = new ArrayList<Integer>();
         
@@ -27,14 +36,15 @@ public class DiskIndexWriter {
         }
 
         for (int i = 0; i < lVocab.size(); i++) {
+            map.put(lVocab.get(i), dataStream.size());
             List<Integer> toBeBytes = new ArrayList<>();
             List<Posting> currentPostings = indArg.getPostings(lVocab.get(i));
             List<Integer> docList = new ArrayList<>();
             List<Integer> tFreqList = new ArrayList<>();
             List<List<Integer>> posGapsLists = new ArrayList<>();
-            System.out.println("======Vocab=======");
+            /*System.out.println("======Vocab=======");
             System.out.println(lVocab.get(i));
-            System.out.println("======Vocab=======");
+            System.out.println("======Vocab=======");*/
 
             for (int k = 0; k < currentPostings.size(); k++) {
                 Posting currPosting = currentPostings.get(k);
@@ -69,7 +79,7 @@ public class DiskIndexWriter {
                     toBeBytes.add(lInt);
                 }
             }
-            System.out.println(debugStatement);            
+            //System.out.println(debugStatement);            
             // for (int a = 0; a < docsGapsList.size(); a++){
             //     toBeBytes.add(docsGapsList.get(a));
             //     toBeBytes.add(tFreqList.get(a));
@@ -86,9 +96,9 @@ public class DiskIndexWriter {
                     e.printStackTrace();
                 }
             }
-            byteOffsets.add(dataStream.size());
+            byteOffsets.add(dataStream.size());            
         }
-        
+        db.close();
         return byteOffsets;  
     }    
 }
