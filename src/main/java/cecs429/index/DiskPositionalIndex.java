@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -22,7 +24,10 @@ import cecs429.text.MSOneTokenProcessor;
 import cecs429.text.TokenProcessor;
 
 public class DiskPositionalIndex implements Index {
+    
     String binPath = "";
+    HashMap<String, Integer> docWeights = new HashMap<String, Integer>();
+    
 
     public DiskPositionalIndex(String binPathArg) {
         binPath = binPathArg;
@@ -37,6 +42,7 @@ public class DiskPositionalIndex implements Index {
         Index invertedIndex = indexCorpus(corpus);
         DiskIndexWriter.writeIndex(invertedIndex, dirSelection);
         DiskPositionalIndex tIndex = new DiskPositionalIndex((dirSelection + "\\Postings.bin"));
+        tIndex.getVocabulary();
         tIndex.getPostings("worship");
     }
 
@@ -67,6 +73,7 @@ public class DiskPositionalIndex implements Index {
             Integer docGapInt = DecodeNextInt(dataInStrm);
             lastDocIDSum = lastDocIDSum + docGapInt;
             Integer docId = lastDocIDSum;
+            Double docScore = DecodeNextDouble(dataInStrm);
             Integer termFrequency = DecodeNextInt(dataInStrm);
             List<Integer> positionList = new ArrayList<Integer>();
             Integer lastPosSum = 0;
@@ -77,26 +84,42 @@ public class DiskPositionalIndex implements Index {
             }
             postingsResult.add(new Posting(docId, positionList));
         }
-       return postingsResult;
+
+        return postingsResult;
     }
 
     @Override
     public List<String> getVocabulary() {
+        List<String> result = new ArrayList<String>();
+        DB db = DBMaker.fileDB("file.db").make();
+        BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING)
+                .valueSerializer(Serializer.INTEGER).createOrOpen();
+        Iterator<String> keys = map.keyIterator();
+        while (keys.hasNext()){
+            result.add(keys.next());
+        }
         // TODO Auto-generated method stub
-        return null;
+        return result;
     }
 
     public Integer DecodeNextInt(DataInputStream dataInputStreamArg){
         Integer result;
-        List<Integer> byteEncodeList = GetNextByteEncoding(dataInputStreamArg);
+        List<Integer> byteEncodeList = GetNextByteEncoding(dataInputStreamArg, 4);
         result = IntFromByteEncoding(byteEncodeList);
         return result;
     }
+    
+    public Double DecodeNextDouble(DataInputStream dataInputStreamArg){
+        Double result;
+        List<Integer> byteEncodeList = GetNextByteEncoding(dataInputStreamArg, 8);
+        result = DoubleFromByteEncoding(byteEncodeList);
+        return result;
+    }
 
-    public List<Integer> GetNextByteEncoding(DataInputStream dataInputStreamArg){
+    public List<Integer> GetNextByteEncoding(DataInputStream dataInputStreamArg, Integer sizeArg){
         List<Integer> result = new ArrayList<Integer>();
         //This is what must change for variable byte encoding;
-        for (int i = 0; i < 4; i++ ){            
+        for (int i = 0; i < sizeArg; i++ ){            
             try {
                 result.add(dataInputStreamArg.read());
             } catch (IOException e) {
@@ -108,12 +131,22 @@ public class DiskPositionalIndex implements Index {
     }
 
     public Integer IntFromByteEncoding(List<Integer> byteEncoding){
-        int size = 4;
+        int size = byteEncoding.size();
         byte[] bList = new byte[size];
         for (int i = 0; i < size; i++){
             bList[i] = (byteEncoding.get(i).byteValue());
         }
         int result = java.nio.ByteBuffer.wrap(bList).getInt();
+        return result;
+    }
+
+    public Double DoubleFromByteEncoding(List<Integer> byteEncoding){
+        int size = byteEncoding.size();
+        byte[] bList = new byte[size];
+        for (int i = 0; i < size; i++){
+            bList[i] = (byteEncoding.get(i).byteValue());
+        }
+        double result = java.nio.ByteBuffer.wrap(bList).getDouble();
         return result;
     }
 
