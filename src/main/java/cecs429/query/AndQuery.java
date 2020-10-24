@@ -38,6 +38,33 @@ public class AndQuery implements Query {
 		return result;
 	}
 
+	public List<Posting> betterIntersection(List<Posting> list1, List<Posting> list2) {
+		List<Posting> result = new ArrayList<>();
+
+		List<Integer> temp1 = new ArrayList<>();
+		for (int i = 0; i < list1.size(); i++) { temp1.add(list1.get(i).getDocumentId()); }
+
+		List<Integer> temp2 = new ArrayList<>();
+		for (int i = 0; i < list2.size(); i++) { temp2.add(list2.get(i).getDocumentId()); }
+
+		int listPtr1 = 0;
+		int listPtr2 = 0;
+		while (list1 != null && list2 != null) {
+			if (listPtr1 == temp1.size()-1 || listPtr2 == temp2.size()-1) {
+				break;
+			} else if (temp1.get(listPtr1).equals(temp2.get(listPtr2))) {
+				result.add(list1.get(temp1.indexOf(temp1.get(listPtr1))));
+				++listPtr1;
+				++listPtr2;
+			} else if (temp1.get(listPtr1) < temp2.get(listPtr2)) {
+				++listPtr1;
+			} else {
+				++listPtr2;
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Aids in the interesection of an AND NOT query
 	 * */
@@ -92,7 +119,7 @@ public class AndQuery implements Query {
 		} else {
 			result = posQueries.get(0).getPostings(index);
 			for (int i = 1; i < posQueries.size(); i++) {
-				result = intersection(result, posQueries.get(i).getPostings(index));
+				result = betterIntersection(result, posQueries.get(i).getPostings(index));
 			}
 		}
 		return result;
