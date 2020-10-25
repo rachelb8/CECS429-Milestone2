@@ -110,8 +110,8 @@ public class PositionalInvertedIndexTest {
         Index codeConsIndex = IndexerService.indexCorpus(testCorpus);
         ArrayList<PosPairs> allPosPairs = new ArrayList<PosPairs>();
         for (int i = 0; i < allTerms.length; i++) {
-            List<Posting> handPostings = handConsIndex.getPostings(allTerms[i]);
-            List<Posting> codePostings = codeConsIndex.getPostings(allTerms[i]);
+            List<Posting> handPostings = handConsIndex.getBooleanPostings(allTerms[i]);
+            List<Posting> codePostings = codeConsIndex.getBooleanPostings(allTerms[i]);
             for (int k = 0; k < handPostings.size(); k++) {
                 Posting handPosPosting = handPostings.get(k);
                 Posting codePosPosting = codePostings.get(k);

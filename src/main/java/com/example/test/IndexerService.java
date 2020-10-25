@@ -99,7 +99,7 @@ public class IndexerService {
 				}				
 				for (String proToken: processedTokens) {
 					//Get list of positions if it exists
-					List<Posting> existingPostings = positionalInvertedIndex.getPostings(proToken);					
+					List<Posting> existingPostings = positionalInvertedIndex.getBooleanPostings(proToken);					
 					//If it already exists
 					if (existingPostings != null){
 						Posting lastPosting = existingPostings.get(existingPostings.size()-1);

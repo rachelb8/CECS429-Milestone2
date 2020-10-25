@@ -67,14 +67,14 @@ public class PhraseLiteral implements Query {
 		List<Posting> result = new ArrayList<>();
 
 		for (int i = 0; i < mTerms.size(); i++) {
-			if (index.getPostings(mTerms.get(i)) == null) {
+			if (index.getBooleanPostings(mTerms.get(i)) == null) {
 				return result;
 			}
 		}
 		int posCheck = 1;
-		result = index.getPostings(mTerms.get(0));
+		result = index.getBooleanPostings(mTerms.get(0));
 		for (int i = 1; i < mTerms.size(); i++) {
-			result = intersection(result, index.getPostings(mTerms.get(i)), posCheck);
+			result = intersection(result, index.getBooleanPostings(mTerms.get(i)), posCheck);
 			++posCheck;
 		}
 		return result;
