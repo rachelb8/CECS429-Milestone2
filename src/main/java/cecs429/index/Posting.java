@@ -8,10 +8,16 @@ import java.util.List;
 public class Posting {
 	private int mDocumentId;
 	private List<Integer> mPositions;
+	private int mTermFreq; 
 
 	public Posting(int documentId, List<Integer> positionArg) {
 		mDocumentId = documentId;
 		mPositions = positionArg;
+	}
+
+	public Posting(int documentId, int termFreq){
+		mDocumentId = documentId;
+		mTermFreq = termFreq;
 	}
 
 	public void addPosition(int positionArg){
@@ -20,6 +26,10 @@ public class Posting {
 
 	public int getDocumentId() {
 		return mDocumentId;
+	}
+
+	public int getTermFreq(){
+		return mTermFreq;
 	}
 
 	public List<Integer> getPositions() {

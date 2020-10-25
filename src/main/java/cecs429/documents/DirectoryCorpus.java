@@ -152,4 +152,9 @@ public class DirectoryCorpus implements DocumentCorpus {
 		corpus.registerFileDocumentFactory(".json", JsonFileDocument::loadJsonFileDocument); 
 		return corpus; 
 	}
+	
+	@Override
+	public String getPathString (){
+		return mDirectoryPath.toString();
+	}
 }

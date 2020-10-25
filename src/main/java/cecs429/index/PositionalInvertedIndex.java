@@ -38,7 +38,8 @@ public class PositionalInvertedIndex implements Index {
     /**
      * Retrieves a list of Postings of documents that contain the given term
      */
-    public List<Posting> getPostings(String term){
+	@Override
+    public List<Posting> getBooleanPostings(String term){
 		return invIndex.get(term);
     }
 
@@ -50,4 +51,11 @@ public class PositionalInvertedIndex implements Index {
 		Collections.sort(lVocab);
     	return Collections.unmodifiableList(lVocab);
     }
+
+	@Override
+	public List<Posting> getRankedPostings(String term) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

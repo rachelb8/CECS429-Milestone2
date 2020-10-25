@@ -18,4 +18,8 @@ public class GapUtils {
 		return retList;
 
     }
+    
+    static List<Integer> deGap(){
+        return null;
+    }
 }
