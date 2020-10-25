@@ -14,6 +14,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -72,6 +73,11 @@ public class SearchView extends VerticalLayout {
 	    Span indexTimeLabel = new Span("Time to Index Corpus: \n" + indexTime + " seconds");
 	    indexTimeLabel.getElement().getStyle().set("font-size", "10px");
 	    
+	    // Initialize radio button group for the different query modes
+	    RadioButtonGroup<String> queryModeRadioGroup = new RadioButtonGroup<>();
+	    queryModeRadioGroup.setLabel("Select a Query Mode:");
+	    queryModeRadioGroup.setItems("Boolean", "Ranked");
+	    queryModeRadioGroup.getStyle().set("white-space","nowrap");
 
 	    // Initialize directory button
 	    // Move back to MainView
@@ -239,7 +245,7 @@ public class SearchView extends VerticalLayout {
 
 	    // Add components to their respective layouts
 	    hLayoutButtons.add(dirButton, vocabButton);
-	    hLayoutSearch.add(queryField, searchButton, stemButton);
+	    hLayoutSearch.add(queryField, searchButton, stemButton, queryModeRadioGroup);
 	    vLayoutSearch.add(hLayoutSearch, indexTimeLabel, hLayoutButtons);
 
 	    // Add layout to the view

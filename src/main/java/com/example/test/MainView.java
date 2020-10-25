@@ -1,12 +1,12 @@
 package com.example.test;
 
 import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
@@ -47,11 +47,40 @@ public class MainView extends VerticalLayout {
     	service = new IndexerService();
 
         // Use TextField for standard text input for directory selection
-        TextField dirField = new TextField("Please Enter a Directory:");
+        TextField dirField = new TextField("Please Enter a Path to a Diretory or an Existing Index:");
         dirField.addThemeName("bordered");
+        dirField.setWidth("420px");
+        
+        // Initialize horizontal layout
+        HorizontalLayout hLayoutButtons = new HorizontalLayout();
+		hLayoutButtons.setSpacing(true);
 
-        // Initialize the index button
-        Button indexButton = new Button("Index",
+        // Initialize the new index button
+        Button indexNewButton = new Button("Build New Index",
+                e -> {
+
+                	// Directory field null check 
+                	if (dirField.getValue() != "") {
+                		long result = service.run(dirField.getValue());	
+                 		String indexTime = String.valueOf(TimeUnit.MILLISECONDS.toSeconds(result));
+                 		
+                 		// Send the index time to the next view
+                        ComponentUtil.setData(UI.getCurrent(), String.class, indexTime);
+                        ComponentUtil.setData(UI.getCurrent(), IndexerService.class, service);
+                        
+                        // Move to SearchView
+                        UI.getCurrent().navigate(SearchView.class);
+                	} else {
+                		Span warning = new Span("No directory has been selected.");
+                		warning.getElement().getStyle().set("font-size", "12px");
+                		add(warning);
+                	}    
+
+                });
+        
+        //TO-DO: Add functionality once we have the logic
+        // Initialize the existing index button
+        Button indexExistingButton = new Button("Query Existing Index",
                 e -> {
 
                 	// Directory field null check 
@@ -74,17 +103,16 @@ public class MainView extends VerticalLayout {
                 });
 
         // Theme variants give you predefined extra styles for components
-        indexButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        indexNewButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        indexExistingButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         
-        //Align Items to the center
+        // Align Items to the center
         setAlignItems(Alignment.CENTER);
-
-        // Pressing enter in this view clicks the index button
-        indexButton.addClickShortcut(Key.ENTER);
-
-        // Use custom CSS classes to apply styling
-        addClassName("centered-content");
         
-        add(dirField, indexButton);	
+        // Add components to their respective layout
+        hLayoutButtons.add(indexNewButton, indexExistingButton);
+
+        // Add directory field and button layout to the view
+        add(dirField, hLayoutButtons);	
     }
 }
