@@ -42,7 +42,7 @@ public class DiskIndexWriter {
             String currentVocab = lVocab.get(i);
             map.put(currentVocab, dataStream.size());
             List<Byte> toBeBytes = new ArrayList<>();
-            List<Posting> currentPostings = indArg.getPostings(currentVocab);
+            List<Posting> currentPostings = indArg.getBooleanPostings(currentVocab);
             List<Integer> docList = new ArrayList<>();
             List<Double> scoreList = new ArrayList<>();
             List<Integer> tFreqList = new ArrayList<>();
@@ -66,8 +66,8 @@ public class DiskIndexWriter {
                 Integer termFreq = postingGaps.size();
                 docMap.put(currentVocab, termFreq);
                 tFreqList.add(termFreq);
-                double lnScore = (-Math.log(termFreq))/termFreq;
-                scoreList.add((1 + lnScore));   
+                double lnScore = 1 + (Math.log(termFreq));
+                scoreList.add(lnScore);   
 
             }
 

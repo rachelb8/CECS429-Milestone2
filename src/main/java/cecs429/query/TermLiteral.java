@@ -24,7 +24,7 @@ public class TermLiteral implements Query {
 	
 	@Override
 	public List<Posting> getPostings(Index index) {
-		return index.getPostings(mTerm);
+		return index.getBooleanPostings(mTerm);
 	}
 	
 	@Override
@@ -36,4 +36,5 @@ public class TermLiteral implements Query {
 	public Boolean isPositive() {
 		return true;
 	}
+
 }

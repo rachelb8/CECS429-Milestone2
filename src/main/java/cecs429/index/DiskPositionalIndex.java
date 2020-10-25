@@ -1,8 +1,11 @@
 package cecs429.index;
 
 import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -26,8 +29,6 @@ import cecs429.text.TokenProcessor;
 public class DiskPositionalIndex implements Index {
     
     String binPath = "";
-    HashMap<String, Integer> docWeights = new HashMap<String, Integer>();
-    
 
     public DiskPositionalIndex(String binPathArg) {
         binPath = binPathArg;
@@ -39,15 +40,15 @@ public class DiskPositionalIndex implements Index {
         //String dirSelection = dirScanner.next();
         String dirSelection = "MobyDick";
         DocumentCorpus corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
-        Index invertedIndex = indexCorpus(corpus);
+        PositionalInvertedIndex invertedIndex = indexCorpus(corpus);
         DiskIndexWriter.writeIndex(invertedIndex, dirSelection);
         DiskPositionalIndex tIndex = new DiskPositionalIndex((dirSelection + "\\Postings.bin"));
         tIndex.getVocabulary();
-        tIndex.getPostings("worship");
+        tIndex.getBooleanPostings("worship");
     }
 
     @Override
-    public List<Posting> getPostings(String term) {
+    public List<Posting> getRankedPostings(String term) {
         List<Posting> postingsResult = new ArrayList<Posting>();
         DB db = DBMaker.fileDB("file.db").make();
         BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING)
@@ -67,24 +68,64 @@ public class DiskPositionalIndex implements Index {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        Integer docFrequency = DecodeNextInt(dataInStrm);
+        Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
         Integer lastDocIDSum = 0;            
         for (int j = 0; j < docFrequency; j++){
-            Integer docGapInt = DecodeNextInt(dataInStrm);
+            Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
             lastDocIDSum = lastDocIDSum + docGapInt;
             Integer docId = lastDocIDSum;
-            Double docScore = DecodeNextDouble(dataInStrm);
-            Integer termFrequency = DecodeNextInt(dataInStrm);
+            Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
+            Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);            
+            for (int k = 0; k < termFrequency; k++){
+                Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+            }
+            postingsResult.add(new Posting(docId, termFrequency));
+        }
+        db.close();
+        
+        return postingsResult;
+    }
+
+    @Override
+    public List<Posting> getBooleanPostings(String term) {
+        List<Posting> postingsResult = new ArrayList<Posting>();
+        DB db = DBMaker.fileDB("file.db").make();
+        BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING)
+                .valueSerializer(Serializer.INTEGER).createOrOpen();
+        Integer postingStartOffset = map.get(term);
+        DataInputStream dataInStrm = null;
+        try {
+            dataInStrm = new DataInputStream(new FileInputStream(binPath));
+
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            dataInStrm.skipBytes(postingStartOffset);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
+        Integer lastDocIDSum = 0;            
+        for (int j = 0; j < docFrequency; j++){
+            Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+            lastDocIDSum = lastDocIDSum + docGapInt;
+            Integer docId = lastDocIDSum;
+            Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
+            Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);
             List<Integer> positionList = new ArrayList<Integer>();
             Integer lastPosSum = 0;
             for (int k = 0; k < termFrequency; k++){
-                Integer posGapInt = DecodeNextInt(dataInStrm);
+                Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
                 lastPosSum = lastPosSum + posGapInt;
                 positionList.add(lastPosSum);
             }
             postingsResult.add(new Posting(docId, positionList));
         }
-
+        db.close();
+        
         return postingsResult;
     }
 
@@ -98,64 +139,26 @@ public class DiskPositionalIndex implements Index {
         while (keys.hasNext()){
             result.add(keys.next());
         }
+        db.close();
         // TODO Auto-generated method stub
         return result;
     }
 
-    public Integer DecodeNextInt(DataInputStream dataInputStreamArg){
-        Integer result;
-        List<Integer> byteEncodeList = GetNextByteEncoding(dataInputStreamArg, 4);
-        result = IntFromByteEncoding(byteEncodeList);
-        return result;
-    }
     
-    public Double DecodeNextDouble(DataInputStream dataInputStreamArg){
-        Double result;
-        List<Integer> byteEncodeList = GetNextByteEncoding(dataInputStreamArg, 8);
-        result = DoubleFromByteEncoding(byteEncodeList);
-        return result;
-    }
 
-    public List<Integer> GetNextByteEncoding(DataInputStream dataInputStreamArg, Integer sizeArg){
-        List<Integer> result = new ArrayList<Integer>();
-        //This is what must change for variable byte encoding;
-        for (int i = 0; i < sizeArg; i++ ){            
-            try {
-                result.add(dataInputStreamArg.read());
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        return result;
-    }
-
-    public Integer IntFromByteEncoding(List<Integer> byteEncoding){
-        int size = byteEncoding.size();
-        byte[] bList = new byte[size];
-        for (int i = 0; i < size; i++){
-            bList[i] = (byteEncoding.get(i).byteValue());
-        }
-        int result = java.nio.ByteBuffer.wrap(bList).getInt();
-        return result;
-    }
-
-    public Double DoubleFromByteEncoding(List<Integer> byteEncoding){
-        int size = byteEncoding.size();
-        byte[] bList = new byte[size];
-        for (int i = 0; i < size; i++){
-            bList[i] = (byteEncoding.get(i).byteValue());
-        }
-        double result = java.nio.ByteBuffer.wrap(bList).getDouble();
-        return result;
-    }
-
-    private static Index indexCorpus(DocumentCorpus corpus) {
+    private static PositionalInvertedIndex indexCorpus(DocumentCorpus corpus) {
 		Iterable<Document> allDocs = corpus.getDocuments();
 		TokenProcessor processor = new MSOneTokenProcessor();
-
-		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
+        DataOutputStream dOutputStream = null;
+        try {
+            dOutputStream = new DataOutputStream(new FileOutputStream(corpus.getPathString() + "\\docWeights.bin"));
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();        
 		for (Document lDoc : allDocs) {
+            HashMap<String, Integer> docScores = new HashMap<String, Integer>();
 			EnglishTokenStream eStream = new EnglishTokenStream(lDoc.getContent());
 			//process into Tokens
 			Iterable<String> eTokens = eStream.getTokens();
@@ -166,16 +169,22 @@ public class DiskPositionalIndex implements Index {
 			}
 			//Starting from the first word, going to the last
 			for (int i = 0; i < tokenList.size(); i++){
-				List<String> processedTokens = new ArrayList<>();
+                List<String> processedTokens = new ArrayList<>();
 				//The current term
-				String currentTerm = tokenList.get(i);
+                String currentTerm = tokenList.get(i);                
 				List<String> processedStrings = processor.processToken(currentTerm);
 				for (String lToken : processedStrings) {
 					processedTokens.add(lToken);
 				}				
 				for (String proToken: processedTokens) {
-					//Get list of positions if it exists
-					List<Posting> existingPostings = positionalInvertedIndex.getPostings(proToken);					
+                    Integer tokenScore = docScores.get(proToken);
+                    if (tokenScore == null){
+                        docScores.put(proToken, 0);
+                        tokenScore = docScores.get(proToken);
+                    }
+                    docScores.put(proToken, ++tokenScore);
+                    //Get list of positions if it exists
+					List<Posting> existingPostings = positionalInvertedIndex.getBooleanPostings(proToken);					
 					//If it already exists
 					if (existingPostings != null){
 						Posting lastPosting = existingPostings.get(existingPostings.size()-1);
@@ -200,10 +209,23 @@ public class DiskPositionalIndex implements Index {
 					}
 				}
 				
-			}			
-		}
-		
+            }
+            Double sumScores = 0.0;
+            for (Integer lInt: docScores.values()){
+                double lnScore = 1 + (Math.log(lInt));
+                Double sqrdInt = (lnScore*lnScore);                
+                sumScores += sqrdInt;
+            }
+            Double docWeight = Math.sqrt(sumScores);
+            try {
+                dOutputStream.writeDouble(docWeight);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+		}		
 		return positionalInvertedIndex;
 	}
+
     
 }

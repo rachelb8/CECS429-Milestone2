@@ -13,6 +13,7 @@ public interface Query {
      */
     List<Posting> getPostings(Index index);
     
+
     /**
      * Determines whether a query is positive or negative
      */
