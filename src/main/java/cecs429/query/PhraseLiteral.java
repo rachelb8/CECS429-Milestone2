@@ -40,27 +40,39 @@ public class PhraseLiteral implements Query {
 	 */
 	public List<Posting> intersection(List<Posting> list1, List<Posting> list2, int posCheck) {
 		List<Posting> result = new ArrayList<>();
-
-		List<Integer> temp1 = new ArrayList<>();
-		for (int i = 0; i < list1.size(); i++) { temp1.add(list1.get(i).getDocumentId()); }
-
-		List<Integer> temp2 = new ArrayList<>();
-		for (int i = 0; i < list2.size(); i++) { temp2.add(list2.get(i).getDocumentId()); }
-
-		for (int n : temp1) {
-			if (temp2.contains(n)) {
-				Posting comparePosting = list2.get(temp2.indexOf(n));
-				for (int x : list1.get(temp1.indexOf(n)).getPositions()) {
-					if (comparePosting.getPositions().contains(x + posCheck)) {
-						if (!result.contains(list1.get(temp1.indexOf(n)))) {
-							result.add(list1.get(temp1.indexOf(n)));
-						}
+		
+		int listPtr1 = 0;
+		int listPtr2 = 0;
+		while (list1 != null && list2 != null) {
+			if (listPtr1 == list1.size()-1 || listPtr2 == list2.size()-1) {
+				break;
+			} else if (list1.get(listPtr1).getDocumentId() == list2.get(listPtr2).getDocumentId()) {
+				int posPtr1 = 0;
+				int posPtr2 = 0;
+				while (list1.get(listPtr1).getPositions() != null && list2.get(listPtr2).getPositions() != null) {
+					if (posPtr1 == list1.get(listPtr1).getPositions().size()-1 || posPtr2 == list2.get(listPtr2).getPositions().size()-1) {
+						++listPtr1;
+						++listPtr2;
+						break;
+					} else if (list1.get(listPtr1).getPositions().get(posPtr1) + posCheck == list2.get(listPtr2).getPositions().get(posPtr2)) {
+						result.add(list1.get(listPtr1));
+						++listPtr1;
+						++listPtr2;
+						break;
+					} else if (list1.get(listPtr1).getPositions().get(posPtr1) < list2.get(listPtr2).getPositions().get(posPtr2)) {
+						++posPtr1;
+					} else {
+						++posPtr2;
 					}
 				}
+			} else if (list1.get(listPtr1).getDocumentId() < list2.get(listPtr2).getDocumentId()) {
+				++listPtr1;
+			} else {
+				++listPtr2;
 			}
 		}
 		return result;
-	 }
+	}
 	
 	@Override
 	public List<Posting> getPostings(Index index) {
