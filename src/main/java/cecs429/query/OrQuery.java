@@ -26,8 +26,9 @@ public class OrQuery implements Query {
 		List<Posting> result = new ArrayList<>();
 
 		for (Query q : mChildren) {
-			if (q.getPostings(index) != null) {
-				for (Posting p : q.getPostings(index)) {
+            List<Posting> tempPostings = q.getPostings(index);
+			if (tempPostings != null) {
+				for (Posting p : tempPostings) {
 					result.add(p);
 				}
 			}
