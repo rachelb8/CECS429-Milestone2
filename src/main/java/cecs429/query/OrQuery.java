@@ -3,6 +3,7 @@ package cecs429.query;
 import cecs429.index.Index;
 import cecs429.index.Posting;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,23 +24,16 @@ public class OrQuery implements Query {
 	@Override
 	public List<Posting> getPostings(Index index) {
 		List<Posting> result = new ArrayList<>();
-		List<Posting> tempPostings = new ArrayList<>();
-		List<Integer> tempResults = new ArrayList<>();
 
 		for (Query q : mChildren) {
 			if (q.getPostings(index) != null) {
 				for (Posting p : q.getPostings(index)) {
-					tempPostings.add(p);
+					result.add(p);
 				}
 			}
 		}
-
-		for (Posting p : tempPostings) {
-			if (!tempResults.contains(p.getDocumentId())) {
-				tempResults.add(p.getDocumentId());
-				result.add(p);
-			}
-		}
+		result = result.stream().distinct().collect(Collectors.toList());
+		result.sort(Comparator.comparing(Posting::getDocumentId));
 		return result;
 	}
 

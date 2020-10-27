@@ -41,22 +41,16 @@ public class AndQuery implements Query {
 	public List<Posting> betterIntersection(List<Posting> list1, List<Posting> list2) {
 		List<Posting> result = new ArrayList<>();
 
-		List<Integer> temp1 = new ArrayList<>();
-		for (int i = 0; i < list1.size(); i++) { temp1.add(list1.get(i).getDocumentId()); }
-
-		List<Integer> temp2 = new ArrayList<>();
-		for (int i = 0; i < list2.size(); i++) { temp2.add(list2.get(i).getDocumentId()); }
-
 		int listPtr1 = 0;
 		int listPtr2 = 0;
 		while (list1 != null && list2 != null) {
-			if (listPtr1 == temp1.size()-1 || listPtr2 == temp2.size()-1) {
+			if (listPtr1 == list1.size()-1 || listPtr2 == list2.size()-1) {
 				break;
-			} else if (temp1.get(listPtr1).equals(temp2.get(listPtr2))) {
-				result.add(list1.get(temp1.indexOf(temp1.get(listPtr1))));
+			} else if (list1.get(listPtr1).getDocumentId() == (list2.get(listPtr2).getDocumentId())) {
+				result.add(list1.get(listPtr1));
 				++listPtr1;
 				++listPtr2;
-			} else if (temp1.get(listPtr1) < temp2.get(listPtr2)) {
+			} else if (list1.get(listPtr1).getDocumentId() < list2.get(listPtr2).getDocumentId()) {
 				++listPtr1;
 			} else {
 				++listPtr2;
