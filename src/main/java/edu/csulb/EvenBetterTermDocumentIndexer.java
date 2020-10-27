@@ -31,7 +31,7 @@ public class EvenBetterTermDocumentIndexer {
 		DocumentCorpus corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
 		Index invertedIndex = indexCorpus(corpus);
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
-		//DiskIndexWriter.writeIndex(invertedIndex, (dirSelection + "\\index"));
+		DiskIndexWriter.writeIndex(invertedIndex, (dirSelection + "\\index"));
 		Scanner inScanner = new Scanner(System.in);
 		boolean continueSearch = true;
 		while (continueSearch){
