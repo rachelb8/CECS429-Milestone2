@@ -40,7 +40,7 @@ public class ConsoleApplication {
 			System.out.print("Enter the existing index path:  ");
 			dirSelection = dirScanner.next();
 			corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
-			DiskPositionalIndex.indexCorpus(corpus);
+			DiskPositionalIndex.indexCorpus(corpus); //TODO - Fix, initialize corpus?
 		}
 		
 		DiskPositionalIndex diskIndex = new DiskPositionalIndex((dirSelection + "\\Postings.bin"),(dirSelection + "\\docWeights.bin"));
