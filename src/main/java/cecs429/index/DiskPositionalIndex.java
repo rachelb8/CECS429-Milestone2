@@ -1,7 +1,6 @@
 package cecs429.index;
 
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,12 +12,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
-
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
-
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
@@ -29,9 +26,11 @@ import cecs429.text.TokenProcessor;
 public class DiskPositionalIndex implements Index {
     
     String binPath = "";
+    String weightsBinPath = "";
 
-    public DiskPositionalIndex(String binPathArg) {
+    public DiskPositionalIndex(String binPathArg, String weightsBinPathArg) {
         binPath = binPathArg;
+        weightsBinPath = weightsBinPathArg;
     }
 
     public static void main(String[] args) {
@@ -42,7 +41,7 @@ public class DiskPositionalIndex implements Index {
         DocumentCorpus corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
         PositionalInvertedIndex invertedIndex = indexCorpus(corpus);
         DiskIndexWriter.writeIndex(invertedIndex, dirSelection);
-        DiskPositionalIndex tIndex = new DiskPositionalIndex((dirSelection + "\\Postings.bin"));
+        DiskPositionalIndex tIndex = new DiskPositionalIndex((dirSelection + "\\postings.bin"),(dirSelection + "\\docWeights.bin"));
         tIndex.getVocabulary();
         tIndex.getBooleanPostings("worship");
     }
@@ -54,34 +53,37 @@ public class DiskPositionalIndex implements Index {
         BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING)
                 .valueSerializer(Serializer.INTEGER).createOrOpen();
         Integer postingStartOffset = map.get(term);
-        DataInputStream dataInStrm = null;
-        try {
-            dataInStrm = new DataInputStream(new FileInputStream(binPath));
+        if (postingStartOffset != null) {
+        	DataInputStream dataInStrm = null;
+            try {
+                dataInStrm = new DataInputStream(new FileInputStream(binPath));
 
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        try {
-            dataInStrm.skipBytes(postingStartOffset);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
-        Integer lastDocIDSum = 0;            
-        for (int j = 0; j < docFrequency; j++){
-            Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
-            lastDocIDSum = lastDocIDSum + docGapInt;
-            Integer docId = lastDocIDSum;
-            Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
-            Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);            
-            for (int k = 0; k < termFrequency; k++){
-                Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
-            postingsResult.add(new Posting(docId, termFrequency));
+            try {
+                dataInStrm.skipBytes(postingStartOffset);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
+            Integer lastDocIDSum = 0;            
+            for (int j = 0; j < docFrequency; j++){
+                Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+                lastDocIDSum = lastDocIDSum + docGapInt;
+                Integer docId = lastDocIDSum;
+                Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
+                Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);            
+                for (int k = 0; k < termFrequency; k++){
+                    Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+                }
+                postingsResult.add(new Posting(docId, termFrequency, docScore));
+            }
+            db.close();
         }
-        db.close();
+        
         
         return postingsResult;
     }
@@ -143,10 +145,32 @@ public class DiskPositionalIndex implements Index {
         // TODO Auto-generated method stub
         return result;
     }
+    
+    public Double getDocWeight(Integer checkDocID) {
+    	Integer numOfBytes = 8;
+    	Integer weightsStartOffset = numOfBytes * (checkDocID - 1) ;
+        DataInputStream dataInStrm = null;
+        try {
+            dataInStrm = new DataInputStream(new FileInputStream(weightsBinPath));
+
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            dataInStrm.skipBytes(weightsStartOffset);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    
+        Double docWeight = ByteUtils.DecodeNextDouble(dataInStrm);
+        return docWeight;    
+    }
 
     
 
-    private static PositionalInvertedIndex indexCorpus(DocumentCorpus corpus) {
+    public static PositionalInvertedIndex indexCorpus(DocumentCorpus corpus) {
 		Iterable<Document> allDocs = corpus.getDocuments();
 		TokenProcessor processor = new MSOneTokenProcessor();
         DataOutputStream dOutputStream = null;
