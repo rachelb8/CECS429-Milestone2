@@ -66,6 +66,7 @@ public class RankedRetrieval {
         	pq.add(docScore);
         }
         
+        //TODO - Only return top 10 documents
         return pq;
     }
 
