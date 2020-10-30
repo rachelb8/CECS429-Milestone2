@@ -9,15 +9,17 @@ public class Posting {
 	private int mDocumentId;
 	private List<Integer> mPositions;
 	private int mTermFreq; 
+	private double mDocScore;
 
 	public Posting(int documentId, List<Integer> positionArg) {
 		mDocumentId = documentId;
 		mPositions = positionArg;
 	}
 
-	public Posting(int documentId, int termFreq){
+	public Posting(int documentId, int termFreq, double docScore){
 		mDocumentId = documentId;
 		mTermFreq = termFreq;
+		mDocScore = docScore;
 	}
 
 	public void addPosition(int positionArg){
@@ -30,6 +32,10 @@ public class Posting {
 
 	public int getTermFreq(){
 		return mTermFreq;
+	}
+	
+	public double getDocScore(){
+		return mDocScore;
 	}
 
 	public List<Integer> getPositions() {
