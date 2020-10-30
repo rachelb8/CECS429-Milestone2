@@ -2,9 +2,10 @@ package cecs429.query;
 
 import cecs429.index.Index;
 import cecs429.index.Posting;
-
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 /**
  * A NotQuery composes other Query objects and merges their postings in an union-like operation.
@@ -23,24 +24,18 @@ public class NotQuery implements Query {
     @Override
     public List<Posting> getPostings(Index index) {
         List<Posting> result = new ArrayList<>();
-		List<Posting> tempPostings = new ArrayList<>();
-		List<Integer> tempResults = new ArrayList<>();
 
 		for (Query q : mChildren) {
-			if (q.getPostings(index) != null) {
-				for (Posting p : q.getPostings(index)) {
-					tempPostings.add(p);
+            List<Posting> tempPostings = q.getPostings(index);
+			if (tempPostings != null) {
+				for (Posting p : tempPostings) {
+					result.add(p);
 				}
 			}
 		}
-
-		for (Posting p : tempPostings) {
-			if (!tempResults.contains(p.getDocumentId())) {
-				tempResults.add(p.getDocumentId());
-				result.add(p);
-			}
-		}
-        return result;
+		result = result.stream().distinct().collect(Collectors.toList());
+		result.sort(Comparator.comparing(Posting::getDocumentId));
+		return result;
     }
 
     @Override
