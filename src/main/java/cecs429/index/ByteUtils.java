@@ -6,7 +6,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import org.eclipse.collections.api.bag.primitive.BooleanBag;
+
+import net.bytebuddy.asm.Advice.Return;
 
 
 public class ByteUtils {
@@ -30,31 +35,35 @@ public class ByteUtils {
         List<List<List<Integer>>> encodeResults = new ArrayList<List<List<Integer>>>();
 
         //encodeResults.add(variableByteEncode(7));
-        encodeResults.add(createByteList(173));
-        encodeResults.add(createByteList(203));
-        encodeResults.add(createByteList(252));
+        // encodeResults.add(createByteList(173));
+        // encodeResults.add(createByteList(203));
+        // encodeResults.add(createByteList(252));
 
-        encodeResults.add(createByteList(130));
-        encodeResults.add(createByteList(240));
-        encodeResults.add(createByteList(470));
-        encodeResults.add(createByteList(60000));        
-        encodeResults.add(createByteList(2460000));
-        encodeResults.add(createByteList(245900000));
+        // // encodeResults.add(createByteList(130));
+        // // encodeResults.add(createByteList(240));
+        // // encodeResults.add(createByteList(470));
+        // encodeResults.add(createByteList(60000));        
+        // encodeResults.add(createByteList(2460000));
+        // encodeResults.add(createByteList(245900000));
         encodeResults.add(createByteList(2147483647));
+        
+        List<List<List<Integer>>> encodes = new ArrayList<List<List<Integer>>>();
+        for (List<List<Integer>> lList: encodeResults){
+            encodes.add(VBEncodeBinList(lList));
+        }
+        for (List<List<Integer>> lList : encodes) {
+            List<Integer> binEncodes = new ArrayList<Integer>();
+            for (List<Integer> lBin : lList) {
+                Integer result = BinListToInteger(lBin);
+                binEncodes.add(result);
+            }
+            System.out.println(DecodeVariableByte(binEncodes));
+        }
 
     }
     
     //-------------------------------------------------------------------------
-
-    public static byte[] convertIntToByteArray(int value) {
-        return  ByteBuffer.allocate(4).putInt(value).array();
-    }
-
-     public static int convertByteArrayToBinaryArray(byte[] bytes) {
-        return ByteBuffer.wrap(bytes).getInt();
-    }
-
-    public static List<Integer> convertIntToBinList(Integer n) {
+    public static List<Integer> IntToBinList(Integer n) {
         int[] binary = new int[8];
         int index = 0;
         Integer convertInt = Byte.toUnsignedInt(n.byteValue());        
@@ -71,6 +80,19 @@ public class ByteUtils {
         return realBinary;
     }
 
+    public static Integer BinListToInteger(List<Integer> listArg){        
+        int result = 0;
+        for (Integer lInt : listArg){
+            if (lInt == 1){
+                result = result<<1;
+            }
+            else{
+                result = result<<0;
+            }
+        }
+        return result;
+    }
+
 
     public static List<List<Integer>> createByteList(Integer n) {
 
@@ -78,7 +100,7 @@ public class ByteUtils {
         List<List<Integer>> results = new ArrayList<List<Integer>>();
         for (Byte lbyte : intBytes) {
             int byteToInt = lbyte.intValue();
-            List<Integer> temp = convertIntToBinList(byteToInt);
+            List<Integer> temp = IntToBinList(byteToInt);
             results.add(temp);
             //System.out.print(temp.toString() + " ");
             //System.out.println(convertToBinary(lbyte));
@@ -87,8 +109,106 @@ public class ByteUtils {
         return results;
     }
 
-    public static Integer variableByteDecode(List<Byte> byteList) {
-        Integer result = 0;
+    public static List<List<Integer>> VBEncodeBinList(List<List<Integer>> binListArg){
+        List<List<Integer>> result = new ArrayList<List<Integer>>();
+        List<Integer> temp = new ArrayList<Integer>();
+        // System.out.println(binListArg.toString());
+        for (List<Integer> lList : binListArg ){
+            temp.addAll(lList);
+        }
+        int bytesNeeded = GetRequiredByteCount(temp);
+        List<Integer> encodeTemp = new ArrayList<Integer>();
+        int k = 0;
+        int startIndex = temp.size() - (bytesNeeded * 7);
+        if (startIndex < 0){
+            encodeTemp.add(0);
+            k++;
+
+            while (startIndex < 0){
+                encodeTemp.add(0);
+                startIndex++;
+                k++;
+            }
+        }
+        
+        for (int i = startIndex; i < temp.size() ; i++){
+            if (k == 0){
+                if (bytesNeeded > 1){
+                    encodeTemp.add(0);
+                }
+                else{
+                    encodeTemp.add(1);
+                }
+                k++;
+            }
+            encodeTemp.add(temp.get(i));
+            k++;
+            if (k == 8){
+                k = 0;
+                bytesNeeded--;
+                result.add(encodeTemp);
+                encodeTemp = new ArrayList<Integer>();
+            }
+        }
+
+        return result;
+    }
+
+    public static Integer GetRequiredByteCount (List<Integer> fullBin){
+        int i, remaining, result;
+        for (i = 0; i < fullBin.size(); i++){
+            if (fullBin.get(i) == 1){
+                break;
+            }
+        }
+        remaining = fullBin.size() - i;
+        if (remaining % 7 == 0){
+            result = remaining / 7;
+        }
+        else{
+            result = (remaining / 7) + 1;
+        }
+        return result;
+    }
+
+    public static Integer DecodeVariableByte(List<Integer> encodingArg) {
+        List<List<Integer>> byteList = new ArrayList<List<Integer>>();
+        List<Integer> tempBinary = new ArrayList<Integer>();
+        List<List<Integer>> completeBinary = new ArrayList<List<Integer>>();
+        List<Integer> intEncoding = new ArrayList<Integer>();
+        for (Integer lInt : encodingArg){
+            byteList.add(IntToBinList(lInt));
+        }
+        
+
+        for (List<Integer> lList : byteList){
+            for (int i = 1; i < 8; i++){
+                tempBinary.add(lList.get(i));
+            }
+        }
+        int bitsFilled = tempBinary.size();
+        int bitsToFill = 32 - bitsFilled;
+        int binaryWalker = 0;
+        for (int list = 0; list < 4; list++){
+            List<Integer> byteBin = new ArrayList<Integer>();
+            for (int ind = 0; ind < 8; ind++){
+                if (bitsToFill > 0){                    
+                    byteBin.add(0);
+                }
+                else{
+                    byteBin.add(tempBinary.get(binaryWalker++));
+                }
+            }
+            completeBinary.add(byteBin);
+            
+
+        }
+        for (List <Integer> lBits : completeBinary){
+            Integer value = BinListToInteger(lBits);
+            intEncoding.add(value);
+        }
+        Integer result = IntFromByteEncoding(intEncoding);       
+
         return result;
     }
 
@@ -124,6 +244,29 @@ public class ByteUtils {
         return result;
     }
 
+    public static List<Integer> GetNextVariableBytes(DataInputStream dataInputStreamArg){
+        int MSB = 128;
+        List<Integer> result = new ArrayList<Integer>();
+        Boolean continueReading = true;
+        //This is what must change for variable byte encoding;
+        while (continueReading){            
+            try {
+                Integer currByte = dataInputStreamArg.read();                
+                while ((currByte & MSB) == 0){
+                    result.add(currByte);
+                    currByte = dataInputStreamArg.read();
+                    
+                }
+                result.add(currByte);
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+
     public static Integer IntFromByteEncoding(List<Integer> byteEncoding){
         int size = byteEncoding.size();
         byte[] bList = new byte[size];
@@ -145,34 +288,14 @@ public class ByteUtils {
     }
 
     public static byte[] getByteArray(Integer integerArg) {
-        byte[] resultArray = ByteBuffer.allocate(4).putInt(integerArg).array();
-        // try {            
-        //     byteOutStream.writeInt(integerArg);
-        //     byteOutStream.flush();
-        // } catch (IOException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // }
-        // resultArray = byteArrayStream.toByteArray();
-        // byteArrayStream.reset();        
+        byte[] resultArray = ByteBuffer.allocate(4).putInt(integerArg).array(); 
         return resultArray;
     }
 
     public static byte[] getByteArray(Double doubleArg){
-        byte[] resultArray = null;
-        try {
-            byteOutStream.writeDouble(doubleArg);
-            byteOutStream.flush();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        resultArray = byteArrayStream.toByteArray(); 
-        byteArrayStream.reset();  
+        byte[] resultArray = ByteBuffer.allocate(8).putDouble(doubleArg).array();
         return resultArray;
-    }
-
-   
+    }   
 
 
     public static void appendToArrayList(List<Byte> arrayArg, byte[] byteArg){
