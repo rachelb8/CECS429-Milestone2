@@ -1,6 +1,7 @@
 package cecs429.query;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import cecs429.index.Index;
@@ -16,10 +17,6 @@ public class NearLiteral implements Query {
     private String mTerm;
     private TokenProcessor mTokenProcessor;
 
-    //private List<Posting> term1Postings = new ArrayList<>();
-    //private List<Posting> term2Postings = new ArrayList<>();
-    //private int k;
-
     public NearLiteral(String term, TokenProcessor processor) {
         mTerm = term;
         mTokenProcessor = processor;
@@ -28,7 +25,7 @@ public class NearLiteral implements Query {
     /**
 	 * Aids in the intersection of two lists and performs a positional merge
 	 */
-	public List<Posting> intersection(List<Posting> list1, List<Posting> list2, int posCheck) {
+	public List<Posting> intersection(List<Posting> list1, List<Posting> list2, int posCheck, int offset) {
 		List<Posting> result = new ArrayList<>();
 		
 		int listPtr1 = 0;
@@ -44,7 +41,7 @@ public class NearLiteral implements Query {
 						++listPtr1;
 						++listPtr2;
 						break;
-					} else if (list1.get(listPtr1).getPositions().get(posPtr1) + posCheck == list2.get(listPtr2).getPositions().get(posPtr2)) {
+					} else if (list1.get(listPtr1).getPositions().get(posPtr1) + posCheck + offset == list2.get(listPtr2).getPositions().get(posPtr2)) {
 						result.add(list1.get(listPtr1));
 						++listPtr1;
 						++listPtr2;
@@ -76,6 +73,8 @@ public class NearLiteral implements Query {
         int k;
         List<Posting> term2Postings = new ArrayList<>();
 
+        int offset = 0;
+
         // Check if first term is a phrase literal ------------------------------------------------
         if (mTerm.charAt(startIndex) == '"') {
             ++startIndex;
@@ -86,6 +85,9 @@ public class NearLiteral implements Query {
                 lengthOut = nextQuote - startIndex;
             }
             PhraseLiteral myPhraseLiteral = new PhraseLiteral(mTerm.substring(startIndex, startIndex + lengthOut), mTokenProcessor);
+            for (String s : Arrays.asList(mTerm.substring(startIndex, startIndex + lengthOut).split(" "))) {
+                ++offset;
+            }
             term1Postings = myPhraseLiteral.getPostings(index);
             startIndex = lengthOut + 2;
             // Else it is a term literal
@@ -141,12 +143,13 @@ public class NearLiteral implements Query {
             term2Postings = myTermLiteral.getPostings(index);
         }
         // ----------------------------------------------------------------------------------------
+        if (offset > 0) { --offset; }
 
         List<Posting> result = new ArrayList<>();
         if (term1Postings == null || term2Postings == null) {
             return result;
         } else {
-            result = intersection(term1Postings, term2Postings, k);
+            result = intersection(term1Postings, term2Postings, k, offset);
         }
         return result;
     }
