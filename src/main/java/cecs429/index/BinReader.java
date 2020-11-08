@@ -12,7 +12,7 @@ import org.mapdb.Serializer;
 public class BinReader {
 
     public static void main(String[] args) {
-        PrintBin("MobyDick\\postings.bin");
+        PrintBin("Gibberish\\postings.bin");
     }
 
     public static void PrintBin(String path) {
@@ -26,6 +26,7 @@ public class BinReader {
             System.out.println(string);
         }
         for (String term : allVocab) {
+            //String term = "think";
             try {
                 dataInStrm = new DataInputStream(new FileInputStream(path));
 
@@ -46,9 +47,11 @@ public class BinReader {
             int docFreq;
             docFreq = ByteUtils.DecodeNextInt(dataInStrm);
             System.out.println("Doc Freq - " + docFreq);
+            int docIDSum = 0;
             for (int i = 0; i < docFreq; i++){
                 int docGap = ByteUtils.DecodeNextInt(dataInStrm);
-                System.out.println("Doc ID gap - " + docGap);
+                docIDSum = docIDSum + docGap;
+                System.out.println("Doc ID  - " + docIDSum);
                 double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
                 System.out.println("Doc Score - " + docScore);
                 int termFreq = ByteUtils.DecodeNextInt(dataInStrm);
@@ -62,6 +65,9 @@ public class BinReader {
                     System.out.println(lastPosSum);
                 }
             }
+            System.out.println("=====================================================");
+            System.out.println("=====================================================");
+
         }
         db.close();
     }
