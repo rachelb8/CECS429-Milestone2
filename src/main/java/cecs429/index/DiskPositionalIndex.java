@@ -38,13 +38,14 @@ public class DiskPositionalIndex implements Index {
         Scanner dirScanner = new Scanner(System.in);
         //System.out.print("Please enter a directory: ");
         //String dirSelection = dirScanner.next();
-        String dirSelection = "MobyDick";
+        String dirSelection = "Gibberish";
         DocumentCorpus corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
         PositionalInvertedIndex invertedIndex = indexCorpus(corpus);
         DiskIndexWriter.writeIndex(invertedIndex, dirSelection);
         DiskPositionalIndex tIndex = new DiskPositionalIndex((dirSelection + "\\Postings.bin"));
         tIndex.getVocabulary();
-        tIndex.getBooleanPostings("worship");
+        List<Posting> testVar = tIndex.getBooleanPostings("worship");
+        System.out.println();
     }
 
     @Override
@@ -77,7 +78,9 @@ public class DiskPositionalIndex implements Index {
             Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
             Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);            
             for (int k = 0; k < termFrequency; k++){
-                Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+                 
+                List<Integer> VBEncode = ByteUtils.GetNextVariableBytes(dataInStrm);
+                Integer posGapInt = ByteUtils.DecodeVariableByte(VBEncode);
             }
             postingsResult.add(new Posting(docId, termFrequency));
         }
@@ -107,18 +110,22 @@ public class DiskPositionalIndex implements Index {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        // System.out.println("Term - " + term);
         Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
+        // System.out.println("Doc Freq - " + docFrequency);
         Integer lastDocIDSum = 0;            
         for (int j = 0; j < docFrequency; j++){
-            Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+            Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);            
             lastDocIDSum = lastDocIDSum + docGapInt;
             Integer docId = lastDocIDSum;
+            // System.out.println("Doc ID - " + docId);
             Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
             Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);
             List<Integer> positionList = new ArrayList<Integer>();
             Integer lastPosSum = 0;
             for (int k = 0; k < termFrequency; k++){
-                Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+                List<Integer> VBEncode = ByteUtils.GetNextVariableBytes(dataInStrm);
+                Integer posGapInt = ByteUtils.DecodeVariableByte(VBEncode);
                 lastPosSum = lastPosSum + posGapInt;
                 positionList.add(lastPosSum);
             }
