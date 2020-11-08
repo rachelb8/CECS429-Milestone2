@@ -89,8 +89,15 @@ public class DiskIndexWriter {
                 byte[] termFreqByte = ByteUtils.getByteArray(postingGaps.size());
                 ByteUtils.appendToArrayList(toBeBytes, termFreqByte);    
                 for (Integer lInt : postingGaps) {
-                    byte[] posByte = ByteUtils.getByteArray(lInt);
-                    ByteUtils.appendToArrayList(toBeBytes, posByte);
+                    List <Integer> encodeInts = ByteUtils.VBEncode(lInt);
+                    byte posByte;
+                    byte[] singleByte = new byte[1]; 
+                    for (Integer eInt : encodeInts) {
+                        posByte = ByteUtils.getByte(eInt);
+                        singleByte [0] = posByte;
+                        ByteUtils.appendToArrayList(toBeBytes, singleByte);
+                    }                    
+                    
                 }
             }
             //System.out.println(debugStatement);            
