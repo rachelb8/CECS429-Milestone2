@@ -1,23 +1,16 @@
 package cecs429.index;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-//import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
-
-import cecs429.index.GapUtils;
 
 public class DiskIndexWriter {
     // docFreq doc ID docTermFreq [pos] docIDAsGap [posGap]

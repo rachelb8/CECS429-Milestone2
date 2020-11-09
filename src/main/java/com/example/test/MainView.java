@@ -47,7 +47,7 @@ public class MainView extends VerticalLayout {
     	service = new IndexerService();
 
         // Use TextField for standard text input for directory selection
-        TextField dirField = new TextField("Please Enter a Path to a Diretory or an Existing Index:");
+        TextField dirField = new TextField("Please Enter a Path to a Directory or an Existing Index:");
         dirField.addThemeName("bordered");
         dirField.setWidth("420px");
         
