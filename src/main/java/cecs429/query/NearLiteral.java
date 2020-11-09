@@ -73,6 +73,9 @@ public class NearLiteral implements Query {
         int k;
         List<Posting> term2Postings = new ArrayList<>();
 
+        // If the first term is a phrase literal, 
+        // assists in moving the start index to a white space
+        // to continue searching through the near literal string
         int offset = 0;
 
         // Check if first term is a phrase literal ------------------------------------------------
@@ -85,12 +88,13 @@ public class NearLiteral implements Query {
                 lengthOut = nextQuote - startIndex;
             }
             PhraseLiteral myPhraseLiteral = new PhraseLiteral(mTerm.substring(startIndex, startIndex + lengthOut), mTokenProcessor);
-            for (String s : Arrays.asList(mTerm.substring(startIndex, startIndex + lengthOut).split(" "))) {
+            List<String> temp = Arrays.asList(mTerm.substring(startIndex, startIndex + lengthOut).split(" "));
+            for (int i = 1; i < temp.size(); i++) {
                 ++offset;
             }
             term1Postings = myPhraseLiteral.getPostings(index);
-            startIndex = lengthOut + 2;
-            // Else it is a term literal
+            startIndex = lengthOut + 2; // Moves start index to a white space
+            // Else it is a term literal ----------------------------------------------------------
         } else {
             int nextSpace = mTerm.indexOf(' ', startIndex);
             if (nextSpace < 0) {
@@ -100,10 +104,10 @@ public class NearLiteral implements Query {
             }
             TermLiteral myTermLiteral = new TermLiteral(mTerm.substring(startIndex, startIndex + lengthOut), mTokenProcessor);
             term1Postings = myTermLiteral.getPostings(index);
-            startIndex += mTerm.substring(startIndex, startIndex + lengthOut).length();
+            startIndex += mTerm.substring(startIndex, startIndex + lengthOut).length(); // Moves start index to a white space
         }
-        // Converts the k to an int
-        // ---------------------------------------------------------------
+        // Converts the k to an int ---------------------------------------------------------------
+        // Filters out the "NEAR/" between the first term and k
         while (mTerm.charAt(startIndex) == ' ' ||
                mTerm.charAt(startIndex) == 'n' ||
                mTerm.charAt(startIndex) == 'e' ||
@@ -119,10 +123,9 @@ public class NearLiteral implements Query {
             lengthOut = nextSpaceAfterK - startIndex;
         }
         k = Integer.parseInt(mTerm.substring(startIndex, startIndex + lengthOut));
-        startIndex += mTerm.substring(startIndex, startIndex + lengthOut).length();
+        startIndex += mTerm.substring(startIndex, startIndex + lengthOut).length(); // Moves start index to a white space
 
-        // Check if second term is a phrase literal
-        // -----------------------------------------------
+        // Check if second term is a phrase literal -----------------------------------------------
         while (mTerm.charAt(startIndex) == ' ') {
             ++startIndex;
         }
@@ -136,7 +139,7 @@ public class NearLiteral implements Query {
             }
             PhraseLiteral myPhraseLiteral = new PhraseLiteral(mTerm.substring(startIndex, startIndex + lengthOut), mTokenProcessor);
             term2Postings = myPhraseLiteral.getPostings(index);
-            // Else it is a term literal
+            // Else it is a term literal ----------------------------------------------------------
         } else {
             int nextSpace = mTerm.indexOf(' ', startIndex);
             if (nextSpace < 0) {
@@ -148,10 +151,8 @@ public class NearLiteral implements Query {
             term2Postings = myTermLiteral.getPostings(index);
         }
         // ----------------------------------------------------------------------------------------
-        if (offset > 0) { --offset; }
-
         List<Posting> result = new ArrayList<>();
-        if (term1Postings == null || term2Postings == null) {
+        if (term1Postings.size() == 0 || term2Postings.size() == 0) {
             return result;
         } else {
             result = intersection(term1Postings, term2Postings, k, offset);
