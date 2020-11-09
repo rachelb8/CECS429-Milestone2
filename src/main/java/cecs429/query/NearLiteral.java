@@ -104,7 +104,12 @@ public class NearLiteral implements Query {
         }
         // Converts the k to an int
         // ---------------------------------------------------------------
-        while (mTerm.charAt(startIndex) == ' ') {
+        while (mTerm.charAt(startIndex) == ' ' ||
+               mTerm.charAt(startIndex) == 'n' ||
+               mTerm.charAt(startIndex) == 'e' ||
+               mTerm.charAt(startIndex) == 'a' ||
+               mTerm.charAt(startIndex) == 'r' ||
+               mTerm.charAt(startIndex) == '/') {
             ++startIndex;
         }
         int nextSpaceAfterK = mTerm.indexOf(' ', startIndex);
