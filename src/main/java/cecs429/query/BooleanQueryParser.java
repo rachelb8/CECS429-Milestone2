@@ -149,10 +149,24 @@ public class BooleanQueryParser {
 		while (subquery.charAt(startIndex) == ' ') {
 			++startIndex;
 		}
-		// Beginning of a phrase literal
-		if (subquery.charAt(startIndex) == '"') {
+		// Beginning of a near literal
+		if (subquery.charAt(startIndex) == '[') {
 			++startIndex;
-
+			// Locate the next bracket to find the end of this near literal
+			int nextBracket = subquery.indexOf(']', startIndex);
+			if (nextBracket < 0) {
+				// No more literals in this subquery
+				lengthOut = subLength - startIndex;
+			} else {
+				lengthOut = nextBracket - startIndex;
+			}
+			return new Literal(
+				new StringBounds(startIndex, lengthOut),
+				new NearLiteral(subquery.substring(startIndex, startIndex + lengthOut), processor));
+		}
+		// Beginning of a phrase literal
+		else if (subquery.charAt(startIndex) == '"') {
+			++startIndex;
 			// Locate the next quote to find the end of this phrase
 			int nextQuote = subquery.indexOf('"', startIndex);
 			if (nextQuote < 0) {
@@ -165,14 +179,13 @@ public class BooleanQueryParser {
 			return new Literal(
 				new StringBounds(startIndex, lengthOut),
 				new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut), processor));
-
+		}
 		// Beginning of a negative literal
-		} else if (subquery.charAt(startIndex) == '-') {
+		else if (subquery.charAt(startIndex) == '-') {
 			++startIndex;
 			// Beginning of a negative phrase literal
 			if (subquery.charAt(startIndex) == '"') {
 				++startIndex;
-	
 				// Locate the next quote to find the end of this phrase
 				int nextQuote = subquery.indexOf('"', startIndex);
 				if (nextQuote < 0) {
@@ -181,15 +194,12 @@ public class BooleanQueryParser {
 				} else {
 					lengthOut = nextQuote - startIndex;
 				}
-
 				PhraseLiteral myPhraseLiteral = new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut), processor);
 				List<Query> myNotQueryList = new ArrayList<>();
 				myNotQueryList.add(myPhraseLiteral);
 				NotQuery myNotQuery = new NotQuery(myNotQueryList);
 
-				return new Literal(
-					new StringBounds(startIndex, lengthOut), myNotQuery);
-
+				return new Literal(new StringBounds(startIndex, lengthOut), myNotQuery);
 			} else {
 				// Locate the next space to find the end of this literal.
 				int nextSpace = subquery.indexOf(' ', startIndex);
@@ -199,17 +209,16 @@ public class BooleanQueryParser {
 				} else {
 					lengthOut = nextSpace - startIndex;
 				}
-
 				TermLiteral myTermLiteral = new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut), processor);
 				List<Query> myNotQueryList = new ArrayList<>();
 				myNotQueryList.add(myTermLiteral);
 				NotQuery myNotQuery = new NotQuery(myNotQueryList);
 
-				return new Literal(
-					new StringBounds(startIndex, lengthOut), myNotQuery);
+				return new Literal(new StringBounds(startIndex, lengthOut), myNotQuery);
 			}
-			
-		} else {
+		}
+		// Beginning of a term literal
+		else {
 			// Locate the next space to find the end of this literal.
 			int nextSpace = subquery.indexOf(' ', startIndex);
 			if (nextSpace < 0) {
