@@ -12,11 +12,12 @@ import org.mapdb.Serializer;
 public class BinReader {
 
     public static void main(String[] args) {
-        PrintBin("Gibberish\\postings.bin");
+        PrintBin("Gibberish");
     }
 
     public static void PrintBin(String path) {
-        DB db = DBMaker.fileDB("file.db").make();
+        String dbName = path + ".db";
+        DB db = DBMaker.fileDB(dbName).make();
         BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING)
                 .valueSerializer(Serializer.INTEGER).createOrOpen();
         DataInputStream dataInStrm = null;
@@ -28,7 +29,7 @@ public class BinReader {
         for (String term : allVocab) {
             //String term = "think";
             try {
-                dataInStrm = new DataInputStream(new FileInputStream(path));
+                dataInStrm = new DataInputStream(new FileInputStream(path + "\\Postings.bin"));
 
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block

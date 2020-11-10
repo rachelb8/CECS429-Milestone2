@@ -34,16 +34,16 @@ public class ConsoleApplication {
 			System.out.print("Enter a directory path:  ");
 			dirSelection = dirScanner.next();
 			corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
-			Index invertedIndex = DiskPositionalIndex.indexCorpus(corpus);
+			Index invertedIndex = DiskIndexWriter.indexCorpus(corpus);
 			DiskIndexWriter.writeIndex(invertedIndex, (dirSelection));
 		} else if (userSelection.equals("2"))  {
 			System.out.print("Enter the existing index path:  ");
 			dirSelection = dirScanner.next();
 			corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
-			DiskPositionalIndex.indexCorpus(corpus); //TODO - Fix, initialize corpus?
+			DiskIndexWriter.indexCorpus(corpus); //TODO - Fix, initialize corpus?
 		}
 		
-		DiskPositionalIndex diskIndex = new DiskPositionalIndex((dirSelection + "\\Postings.bin"),(dirSelection + "\\docWeights.bin"));
+		DiskPositionalIndex diskIndex = new DiskPositionalIndex(dirSelection);
 		Scanner inScanner = new Scanner(System.in);
 		Scanner modeScanner = new Scanner(System.in);
 		System.out.print("Select a query mode: \n(1) Boolean \n(2) Ranked  ");
