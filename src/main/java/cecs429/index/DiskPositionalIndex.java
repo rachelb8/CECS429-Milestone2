@@ -81,8 +81,8 @@ public class DiskPositionalIndex implements Index {
                 }
                 postingsResult.add(new Posting(docId, termFrequency, docScore));
             }
-            db.close();
         }
+        db.close();
         
         
         return postingsResult;
@@ -95,36 +95,39 @@ public class DiskPositionalIndex implements Index {
         BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING)
                 .valueSerializer(Serializer.INTEGER).createOrOpen();
         Integer postingStartOffset = map.get(term);
-        DataInputStream dataInStrm = null;
-        try {
-            dataInStrm = new DataInputStream(new FileInputStream(binPath));
+        
+        if (postingStartOffset != null) {
+        	DataInputStream dataInStrm = null;
+            try {
+                dataInStrm = new DataInputStream(new FileInputStream(binPath));
 
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        try {
-            dataInStrm.skipBytes(postingStartOffset);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
-        Integer lastDocIDSum = 0;            
-        for (int j = 0; j < docFrequency; j++){
-            Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
-            lastDocIDSum = lastDocIDSum + docGapInt;
-            Integer docId = lastDocIDSum;
-            Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
-            Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);
-            List<Integer> positionList = new ArrayList<Integer>();
-            Integer lastPosSum = 0;
-            for (int k = 0; k < termFrequency; k++){
-                Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
-                lastPosSum = lastPosSum + posGapInt;
-                positionList.add(lastPosSum);
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
-            postingsResult.add(new Posting(docId, positionList));
+            try {
+                dataInStrm.skipBytes(postingStartOffset);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
+            Integer lastDocIDSum = 0;            
+            for (int j = 0; j < docFrequency; j++){
+                Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+                lastDocIDSum = lastDocIDSum + docGapInt;
+                Integer docId = lastDocIDSum;
+                Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
+                Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);
+                List<Integer> positionList = new ArrayList<Integer>();
+                Integer lastPosSum = 0;
+                for (int k = 0; k < termFrequency; k++){
+                    Integer posGapInt = ByteUtils.DecodeNextInt(dataInStrm);
+                    lastPosSum = lastPosSum + posGapInt;
+                    positionList.add(lastPosSum);
+                }
+                postingsResult.add(new Posting(docId, positionList));
+            }
         }
         db.close();
         
@@ -150,21 +153,32 @@ public class DiskPositionalIndex implements Index {
     	Integer numOfBytes = 8;
     	Integer weightsStartOffset = numOfBytes * (checkDocID - 1) ;
         DataInputStream dataInStrm = null;
+        FileInputStream fileInStrm = null;
+        
         try {
-            dataInStrm = new DataInputStream(new FileInputStream(weightsBinPath));
+        	fileInStrm = new FileInputStream(weightsBinPath);
+            dataInStrm = new DataInputStream(fileInStrm);
 
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        
         try {
             dataInStrm.skipBytes(weightsStartOffset);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-    
+        
         Double docWeight = ByteUtils.DecodeNextDouble(dataInStrm);
+        
+        try {
+			fileInStrm.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         return docWeight;    
     }
 

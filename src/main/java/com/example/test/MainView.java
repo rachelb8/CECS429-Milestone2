@@ -61,7 +61,7 @@ public class MainView extends VerticalLayout {
 
                 	// Directory field null check 
                 	if (dirField.getValue() != "") {
-                		long result = service.run(dirField.getValue());	
+                		long result = service.runNew(dirField.getValue());	
                  		String indexTime = String.valueOf(TimeUnit.MILLISECONDS.toSeconds(result));
                  		
                  		// Send the index time to the next view
@@ -78,14 +78,13 @@ public class MainView extends VerticalLayout {
 
                 });
         
-        //TO-DO: Add functionality once we have the logic
         // Initialize the existing index button
         Button indexExistingButton = new Button("Query Existing Index",
                 e -> {
 
                 	// Directory field null check 
                 	if (dirField.getValue() != "") {
-                		long result = service.run(dirField.getValue());	
+                		long result = service.runExisting(dirField.getValue());	
                  		String indexTime = String.valueOf(TimeUnit.MILLISECONDS.toSeconds(result));
                  		
                  		// Send the index time to the next view

@@ -107,7 +107,7 @@ public class PositionalInvertedIndexTest {
         docPostings(handConsIndex, fourTerms, 4, fourPos);
 
         DocumentCorpus testCorpus = DirectoryCorpus.loadMilestone1Directory(Paths.get("Gibberish"));
-        Index codeConsIndex = IndexerService.indexCorpus(testCorpus);
+        Index codeConsIndex = DiskPositionalIndex.indexCorpus(testCorpus);
         ArrayList<PosPairs> allPosPairs = new ArrayList<PosPairs>();
         for (int i = 0; i < allTerms.length; i++) {
             List<Posting> handPostings = handConsIndex.getBooleanPostings(allTerms[i]);

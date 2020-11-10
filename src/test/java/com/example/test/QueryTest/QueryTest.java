@@ -22,12 +22,12 @@ public class QueryTest {
     @Before
     public void Initialize(){
         testIndServ = new IndexerService();
-        long queryTime = testIndServ.run("Gibberish");
+        long queryTime = testIndServ.runNew("Gibberish");
     } 
 
     @Test
     public void AndPartialTest(){
-        List<Document> allResult = testIndServ.search("Stand Platinum");
+        List<Document> allResult = testIndServ.searchBoolean("Stand Platinum");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());
@@ -42,9 +42,9 @@ public class QueryTest {
 
     @Test
     public void AndNullTest(){
-        List<Document> nullResult = testIndServ.search("Heirophant Green");
+        List<Document> nullResult = testIndServ.searchBoolean("Heirophant Green");
         Object[] emptyArray = {};
-        List<Document> allResult = testIndServ.search("The World");       
+        List<Document> allResult = testIndServ.searchBoolean("The World");       
         assertArrayEquals(nullResult.toArray(), emptyArray);
         
         
@@ -52,7 +52,7 @@ public class QueryTest {
 
     @Test
     public void AndFullTest(){
-        List<Document> allResult = testIndServ.search("The World");
+        List<Document> allResult = testIndServ.searchBoolean("The World");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());
@@ -64,7 +64,7 @@ public class QueryTest {
 
     @Test
     public void OrPartialTest(){
-        List<Document> allResult = testIndServ.search("Stand + Platinum");
+        List<Document> allResult = testIndServ.searchBoolean("Stand + Platinum");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());
@@ -81,14 +81,14 @@ public class QueryTest {
 
     @Test
     public void OrNullTest(){
-        List<Document> nullResult = testIndServ.search("Heirophant + Green");
+        List<Document> nullResult = testIndServ.searchBoolean("Heirophant + Green");
         Object[] emptyArray = {};
         assertArrayEquals(nullResult.toArray(), emptyArray);
     }
 
     @Test
     public void OrFullTest(){
-        List<Document> allResult = testIndServ.search("Among + Platinum");
+        List<Document> allResult = testIndServ.searchBoolean("Among + Platinum");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());
@@ -106,7 +106,7 @@ public class QueryTest {
 
     @Test
     public void NotPartialTest(){
-        List<Document> allResult = testIndServ.search("Star -Platinum");
+        List<Document> allResult = testIndServ.searchBoolean("Star -Platinum");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());
@@ -120,14 +120,14 @@ public class QueryTest {
     
     @Test
     public void NotNullTest(){
-        List<Document> nullResult = testIndServ.search("World -The");
+        List<Document> nullResult = testIndServ.searchBoolean("World -The");
         Object[] emptyArray = {};
         assertArrayEquals(nullResult.toArray(), emptyArray);
     }
 
     @Test
     public void NotFullTest(){
-        List<Document> allResult = testIndServ.search("The -Heirophant");
+        List<Document> allResult = testIndServ.searchBoolean("The -Heirophant");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());
@@ -145,7 +145,7 @@ public class QueryTest {
 
     @Test
     public void PhraseTest(){
-        List<Document> allResult = testIndServ.search("\"Stand among the world\"");
+        List<Document> allResult = testIndServ.searchBoolean("\"Stand among the world\"");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());
@@ -157,7 +157,7 @@ public class QueryTest {
 
     @Test
     public void LongPhraseTest(){
-        List<Document> allResult = testIndServ.search("\"What is the world's power?\n The power is time\n What is star platinum's power?\n The power is the world.\n Star platinum is the world?\"");
+        List<Document> allResult = testIndServ.searchBoolean("\"What is the world's power?\n The power is time\n What is star platinum's power?\n The power is the world.\n Star platinum is the world?\"");
         List<Integer> resultIds = new ArrayList<Integer>();
         for (Document lDoc: allResult){
             resultIds.add(lDoc.getId());

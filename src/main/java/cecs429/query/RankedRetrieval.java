@@ -1,5 +1,6 @@
 package cecs429.query;
 
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -22,6 +23,7 @@ public class RankedRetrieval {
     //      (Use a binary heap priority queue to select the largest results; )
     //      (Do not sort the accumulators)
 	
+	Integer DOCS_RETURNED = 10;
 	DocumentCorpus corpusLocal;
     public PriorityQueue<DocumentScore> rankQuery(DocumentCorpus corpus, DiskPositionalIndex diskIndex, String queryString){
     	corpusLocal = corpus;
@@ -62,12 +64,28 @@ public class RankedRetrieval {
         	if (docScore.getScore() != 0.0) {
         		Double originalScore = docScore.getScore();
         		docScore.setScore(originalScore/Ld);
+        		System.out.println("");
         	}
         	pq.add(docScore);
         }
         
-        //TODO - Only return top 10 documents
-        return pq;
+        // Only return top 10 documents
+        PriorityQueue<DocumentScore> pqHighest = new PriorityQueue<DocumentScore>();
+        
+        if(pq.size() < DOCS_RETURNED) {
+        	return pq;
+        }
+        
+        int counter = 0;
+        while (counter < DOCS_RETURNED) {
+        	DocumentScore docScore = pq.poll();
+        	if(docScore != null) {
+        		pqHighest.add(docScore); 
+        		counter++;
+        	}
+        }
+         
+        return pqHighest;
     }
 
 	public class DocumentScore implements Comparable<DocumentScore> {
@@ -93,6 +111,14 @@ public class RankedRetrieval {
 
 		public void setScore(Double score) {
 			this.score = score;
+		}
+		
+		public String getTitle() {
+			return corpusLocal.getDocument(docID).getTitle();
+		}
+		
+		public Reader getContent() {
+			return corpusLocal.getDocument(docID).getContent();
 		}
 		
 		@Override
