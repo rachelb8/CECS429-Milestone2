@@ -42,9 +42,9 @@ public class IndexerService {
  		watch.start();
  		
  		corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(selectedDir).toAbsolutePath());
-		index = DiskPositionalIndex.indexCorpus(corpus);
+		index = DiskIndexWriter.indexCorpus(corpus);
 		DiskIndexWriter.writeIndex(index, (selectedDir));
-		diskIndex = new DiskPositionalIndex((selectedDir + "\\Postings.bin"),(selectedDir + "\\docWeights.bin"));
+		diskIndex = new DiskPositionalIndex((selectedDir));
 		
 		watch.stop();
  		long result = watch.getTime(); 
@@ -63,7 +63,7 @@ public class IndexerService {
  		
  		corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(selectedDir).toAbsolutePath());
 		corpus.getDocuments();
-		diskIndex = new DiskPositionalIndex((selectedDir + "\\Postings.bin"),(selectedDir + "\\docWeights.bin"));
+		diskIndex = new DiskPositionalIndex(selectedDir);
 		
 		watch.stop();
  		long result = watch.getTime(); 
