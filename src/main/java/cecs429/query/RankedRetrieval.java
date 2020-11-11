@@ -45,19 +45,19 @@ public class RankedRetrieval {
         		postings.addAll(diskIndex.getRankedPostings(queryTerm)); 
         	}
         	 
-        	Integer N = corpus.getCorpusSize();
-        	Integer dft = postings.size();
-        	Double wqt = 0.0; 
+        	int N = corpus.getCorpusSize();
+        	int dft = postings.size();
+        	double wqt = 0.0; 
         	if (dft != 0) {
-        		wqt = Math.log(1 + (N/dft));
+        		wqt = Math.log(1 + ((double)N/dft));
         	}
         	
             for (Posting p: postings) {
             	Integer docID = p.getDocumentId();
-            	Double wdt = p.getDocScore();
+            	double wdt = p.getDocScore();
             	DocumentScore docScore = accumulator.stream().filter(doc -> docID.equals(doc.getDocID())).findFirst().orElse(null);
             	if(docScore != null) {
-            		Double originalScore = docScore.getScore();
+            		double originalScore = docScore.getScore();
             		docScore.setScore(originalScore + wdt);
             	} else {
             		accumulator.add(new DocumentScore(docID, wdt * wqt));
@@ -67,9 +67,9 @@ public class RankedRetrieval {
         
         PriorityQueue<DocumentScore> pq = new PriorityQueue<DocumentScore>();
         for (DocumentScore docScore: accumulator) {
-        	Double Ld = diskIndex.getDocWeight(docScore.getDocID());
+        	double Ld = diskIndex.getDocWeight(docScore.getDocID());
         	if (docScore.getScore() != 0.0) {
-        		Double originalScore = docScore.getScore();
+        		double originalScore = docScore.getScore();
         		docScore.setScore(originalScore/Ld);
         	}
         	pq.add(docScore);
