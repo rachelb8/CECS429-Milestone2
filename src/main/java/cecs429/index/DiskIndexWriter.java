@@ -26,9 +26,7 @@ public class DiskIndexWriter {
         BTreeMap<String, Integer> map = db.treeMap("map").keySerializer(Serializer.STRING).valueSerializer(Serializer.INTEGER).createOrOpen();
         List<String> lVocab = indArg.getVocabulary();
         List<Integer> byteOffsets = new ArrayList<Integer>();
-        List<Double> docScores = new ArrayList<Double>();
         String postingsBinPath = absPathsArg + "\\Postings.bin";
-        // HashMap<Integer,HashMap<String, Integer>> fullSend = new HashMap<Integer, HashMap<String, Integer>>();
         DataOutputStream dataStream = null;
         try {
             dataStream = new DataOutputStream(new FileOutputStream(postingsBinPath));
@@ -46,24 +44,15 @@ public class DiskIndexWriter {
             List<Double> scoreList = new ArrayList<>();
             List<Integer> tFreqList = new ArrayList<>();
             List<List<Integer>> posGapsLists = new ArrayList<>();
-            /*System.out.println("======Vocab=======");
-            System.out.println(lVocab.get(i));
-            System.out.println("======Vocab=======");*/
 
             for (int k = 0; k < currentPostings.size(); k++) {
                 Posting currPosting = currentPostings.get(k);
                 Integer docId = currPosting.getDocumentId();
                 docList.add(docId);
-                // HashMap<String,Integer> docMap = fullSend.get(docId);
-                // if (docMap == null){
-                //     fullSend.put(docId, new HashMap<String, Integer>());
-                //     docMap = fullSend.get(docId); 
-                // }
                 
                 List<Integer> postingGaps = GapUtils.getGaps(currPosting.getPositions());
                 posGapsLists.add(postingGaps);
                 Integer termFreq = postingGaps.size();
-                // docMap.put(currentVocab, termFreq);
                 tFreqList.add(termFreq);
                 double lnScore = 1 + (Math.log(termFreq));
                 scoreList.add(lnScore);   
@@ -99,15 +88,7 @@ public class DiskIndexWriter {
                     
                 }
             }
-            //System.out.println(debugStatement);            
-            // for (int a = 0; a < docsGapsList.size(); a++){
-            //     toBeBytes.add(docsGapsList.get(a));
-            //     toBeBytes.add(tFreqList.get(a));
-            //     List<Integer> positionsList =  posGapsLists.get(a);
-            //     for (Integer lInt : positionsList) {
-            //         toBeBytes.add(lInt);                    
-            //     }                     
-            // }
+
             for (byte lByte : toBeBytes) {
                 try {
                     dataStream.write(lByte);
@@ -187,9 +168,7 @@ public class DiskIndexWriter {
 				
             }
             Double sumScores = 0.0;
-            if (docScores.values().isEmpty()){
-                System.out.println("No terms");
-            }
+
             for (Integer lInt: docScores.values()){
                 double lnScore = 1 + (Math.log(lInt));
                 Double sqrdInt = (lnScore*lnScore);                
@@ -206,6 +185,10 @@ public class DiskIndexWriter {
 		return positionalInvertedIndex;
 	}
 }
+
+//========================== Code Graveyard ==============
+//Here there be monsters
+
 // String debugStatement = "";
             // debugStatement += docsGapsList.size() + "; ";
             // for (int m = 0; m < docsGapsList.size(); m++) {
@@ -218,3 +201,13 @@ public class DiskIndexWriter {
             //     }
             //     debugStatement += "]";
             // }
+
+//System.out.println(debugStatement);            
+// for (int a = 0; a < docsGapsList.size(); a++){
+//     toBeBytes.add(docsGapsList.get(a));
+//     toBeBytes.add(tFreqList.get(a));
+//     List<Integer> positionsList =  posGapsLists.get(a);
+//     for (Integer lInt : positionsList) {
+//         toBeBytes.add(lInt);                    
+//     }                     
+// }

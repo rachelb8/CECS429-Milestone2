@@ -1,5 +1,6 @@
 package cecs429.query;
 
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -22,7 +23,16 @@ public class RankedRetrieval {
     //      (Use a binary heap priority queue to select the largest results; )
     //      (Do not sort the accumulators)
 	
+	Integer DOCS_RETURNED = 10;
 	DocumentCorpus corpusLocal;
+	
+	/**
+	 * Ranked retrieval method
+	 * @param corpus - corpus
+	 * @param diskIndex - disk positional index
+	 * @param queryString - query given by user 
+	 * @return PriorityQueue with the highest scored documents
+	 */
     public PriorityQueue<DocumentScore> rankQuery(DocumentCorpus corpus, DiskPositionalIndex diskIndex, String queryString){
     	corpusLocal = corpus;
     	MSOneTokenProcessor mTokenProcessor = new MSOneTokenProcessor();
@@ -56,7 +66,6 @@ public class RankedRetrieval {
         }
         
         PriorityQueue<DocumentScore> pq = new PriorityQueue<DocumentScore>();
-        
         for (DocumentScore docScore: accumulator) {
         	Double Ld = diskIndex.getDocWeight(docScore.getDocID());
         	if (docScore.getScore() != 0.0) {
@@ -66,10 +75,24 @@ public class RankedRetrieval {
         	pq.add(docScore);
         }
         
-        //TODO - Only return top 10 documents
-        return pq;
+        // Only return top 10 documents
+        PriorityQueue<DocumentScore> pqHighest = new PriorityQueue<DocumentScore>();
+        
+        DocumentScore docScore = null;
+        while((docScore= pq.poll()) != null) {
+        	pqHighest.add(docScore); 
+    		if(pqHighest.size() == DOCS_RETURNED) {
+    			return pqHighest;
+    		}
+        }
+        return pqHighest;
+
     }
 
+    /**
+     * DocumentScore class - helps keep track of Accumulator values
+     *
+     */
 	public class DocumentScore implements Comparable<DocumentScore> {
         private Integer  docID;
         private Double score;
@@ -95,13 +118,21 @@ public class RankedRetrieval {
 			this.score = score;
 		}
 		
+		public String getTitle() {
+			return corpusLocal.getDocument(docID).getTitle();
+		}
+		
+		public Reader getContent() {
+			return corpusLocal.getDocument(docID).getContent();
+		}
+		
 		@Override
         public int compareTo(DocumentScore other) {
             return other.getScore().compareTo(this.getScore());
         }
 		
 		public String toString() {
-			return String.format("%d %s (Accumulator Value: %.5f)" , docID, corpusLocal.getDocument(docID).getTitle(), score);
+			return String.format("%d %s (Accumulator Value: %.5f)" , docID, getTitle(), score);
 		}
     }
 }

@@ -18,8 +18,6 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import com.example.test.IndexerService;
-
 public class PositionalInvertedIndexTest {
 
     //Full vocabulary
@@ -107,7 +105,7 @@ public class PositionalInvertedIndexTest {
         docPostings(handConsIndex, fourTerms, 4, fourPos);
 
         DocumentCorpus testCorpus = DirectoryCorpus.loadMilestone1Directory(Paths.get("Gibberish"));
-        Index codeConsIndex = IndexerService.indexCorpus(testCorpus);
+        Index codeConsIndex = DiskIndexWriter.indexCorpus(testCorpus);
         ArrayList<PosPairs> allPosPairs = new ArrayList<PosPairs>();
         for (int i = 0; i < allTerms.length; i++) {
             List<Posting> handPostings = handConsIndex.getBooleanPostings(allTerms[i]);
@@ -135,10 +133,6 @@ public class PositionalInvertedIndexTest {
     //Creates all postings assosciated with a doc
     static void docPostings (PositionalInvertedIndex indexArg, String[] terms, int docIdArg, List<Integer[]> intListArg){
         for (int i = 0; i < terms.length; i++){
-            PositionalInvertedIndex testInd = indexArg;
-            String strTest = terms[i];
-            int docTest = docIdArg;
-            Integer[] intsTest = intListArg.get(i);
             fillPostings(indexArg, terms[i], docIdArg, intListArg.get(i));        
         } 
     }

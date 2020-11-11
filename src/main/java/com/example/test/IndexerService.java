@@ -3,18 +3,21 @@ package com.example.test;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
+import cecs429.index.DiskIndexWriter;
+import cecs429.index.DiskPositionalIndex;
 import cecs429.index.Index;
-import cecs429.index.PositionalInvertedIndex;
 import cecs429.index.Posting;
 import cecs429.query.BooleanQueryParser;
 import cecs429.query.Query;
-import cecs429.text.EnglishTokenStream;
+import cecs429.query.RankedRetrieval;
+import cecs429.query.RankedRetrieval.DocumentScore;
 import cecs429.text.MSOneTokenProcessor;
 import cecs429.text.TokenProcessor;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
 
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -25,20 +28,23 @@ import org.apache.commons.lang3.time.StopWatch;
  */
 public class IndexerService {
 	
-	static DocumentCorpus corpus;
+	DocumentCorpus corpus;
+	DiskPositionalIndex diskIndex;
 	static Index index;
 	
 	/**
-	 * Run indexing the corpus
+	 * Run indexing a new corpus
 	 * @param selectedDir - User selected directory
 	 * @return result - time in milliseconds it took to index the corpus
 	 */
-	public long run(String selectedDir) {
+	public long runNew(String selectedDir) {
 		StopWatch watch = new StopWatch();
  		watch.start();
  		
-		corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(selectedDir).toAbsolutePath());
-		index = indexCorpus(corpus);
+ 		corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(selectedDir).toAbsolutePath());
+		index = DiskIndexWriter.indexCorpus(corpus);
+		DiskIndexWriter.writeIndex(index, (selectedDir));
+		diskIndex = new DiskPositionalIndex((selectedDir));
 		
 		watch.stop();
  		long result = watch.getTime(); 
@@ -47,17 +53,36 @@ public class IndexerService {
 	}
 	
 	/**
-	 * Search user queries 
+	 * Run loading existing corpus
+	 * @param selectedDir - User selected directory
+	 * @return result - time in milliseconds it took to load the corpus
+	 */
+	public long runExisting(String selectedDir) {
+		StopWatch watch = new StopWatch();
+ 		watch.start();
+ 		
+ 		corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(selectedDir).toAbsolutePath());
+		corpus.getDocuments();
+		diskIndex = new DiskPositionalIndex(selectedDir);
+		
+		watch.stop();
+ 		long result = watch.getTime(); 
+ 		
+ 		return result;
+	}
+	
+	/**
+	 * Search user queries in Boolean Mode 
 	 * @param query - query the user entered
 	 * @return documents - list of documents that match the query
 	 */
-	public ArrayList<Document> search(String query){
+	public ArrayList<Document> searchBoolean(String query){
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
 		TokenProcessor myProcessor = new MSOneTokenProcessor();
 		ArrayList<Document> documents = new ArrayList<>();
 		query = query.toLowerCase();
 		Query myQuery = booleanQueryParser.parseQuery(query, myProcessor);
-		List<Posting> myQueryPostings = myQuery.getPostings(index);
+		List<Posting> myQueryPostings = myQuery.getPostings(diskIndex);
 		if (myQueryPostings != null){
 			if (myQueryPostings.size() > 0) {
 				for (Posting p : myQueryPostings) {
@@ -70,65 +95,16 @@ public class IndexerService {
 	} 
 	
 	/**
-	 * Return positional index for a given corpus
-	 * @param corpus - corpus to-be indexed
-	 * @return positionalInvertedIndex - positional index returned
+	 * Search user queries in Ranked Mode 
+	 * @param query - query the user entered
+	 * @return documents - list of documents that match the query
 	 */
-	public static Index indexCorpus(DocumentCorpus corpus) {
-		Iterable<Document> allDocs = corpus.getDocuments();
-		TokenProcessor processor = new MSOneTokenProcessor();
+	public PriorityQueue<DocumentScore> searchRanked(String query){
+		RankedRetrieval rankedRetrieval  = new RankedRetrieval();
+        PriorityQueue<DocumentScore> rankedResults = rankedRetrieval.rankQuery(corpus, diskIndex, query);
 
-		PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
-		for (Document lDoc : allDocs) {
-			EnglishTokenStream eStream = new EnglishTokenStream(lDoc.getContent());
-			//process into Tokens
-			Iterable<String> eTokens = eStream.getTokens();
-			//Make into arraylist to track position
-			ArrayList<String> tokenList = new ArrayList<>();
-			for (String lString : eTokens) {
-				tokenList.add(lString);						
-			}
-			//Starting from the first word, going to the last
-			for (int i = 0; i < tokenList.size(); i++){
-				List<String> processedTokens = new ArrayList<>();
-				//The current term
-				String currentTerm = tokenList.get(i);
-				List<String> processedStrings = processor.processToken(currentTerm);
-				for (String lToken : processedStrings) {
-					processedTokens.add(lToken);
-				}				
-				for (String proToken: processedTokens) {
-					//Get list of positions if it exists
-					List<Posting> existingPostings = positionalInvertedIndex.getBooleanPostings(proToken);					
-					//If it already exists
-					if (existingPostings != null){
-						Posting lastPosting = existingPostings.get(existingPostings.size()-1);
-						if (lastPosting.getDocumentId() != lDoc.getId()){
-							List<Integer> lPositions = new ArrayList<>();
-							Posting lPosting = new Posting(lDoc.getId(), lPositions);
-							lPosting.addPosition(i);
-							positionalInvertedIndex.addTerm(proToken, lPosting);
-						}
-						else{
-							lastPosting.addPosition(i);
-						}
-					}
-					//If it does not yet have an existing list
-					else{
-						//Create a new list, add the index
-						List<Integer> lPositions = new ArrayList<>();
-						Posting lPosting = new Posting(lDoc.getId(), lPositions);
-						lPosting.addPosition(i);
-						//and put as a new entry to the map
-						positionalInvertedIndex.addTerm(proToken, lPosting);
-					}
-				}
-				
-			}			
-		}
-		
-		return positionalInvertedIndex;
-	}
+		return rankedResults;
+	} 
 	
 	/**
 	 * Return the vocab list for the index
@@ -136,7 +112,7 @@ public class IndexerService {
 	 */
 	public ArrayList<String> getVocab() {
 		ArrayList<String> vocabList = new ArrayList<>();
-		for (String lString : index.getVocabulary()) {
+		for (String lString : diskIndex.getVocabulary()) {
 			vocabList.add(lString);
 		}
 		return vocabList;

@@ -1,75 +1,14 @@
 package cecs429.index;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import org.eclipse.collections.api.bag.primitive.BooleanBag;
-
-import net.bytebuddy.asm.Advice.Return;
 
 
 public class ByteUtils {
-    private static ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-    private static DataOutputStream byteOutStream = new DataOutputStream(byteArrayStream);
-
-    public static void main(String[] args) {
-
-        /*
-        int num = 470;
-        byte[] result = convertIntToByteArray(num);
-
-        System.out.println("Input            : " + num);
-        for (Byte lbyte : result) {
-            String resStr = String.format("%8s", Integer.toBinaryString(lbyte & 0xFF)).replace(' ', '0');
-            System.out.print(resStr + " ");
-        }
-        //System.out.println("Byte Array (Hex) : " + convertBytesToHex(result));
-        */
-
-        List<List<List<Integer>>> encodeResults = new ArrayList<List<List<Integer>>>();
-
-        
-        // encodeResults.add(createIntBin(173));
-        // encodeResults.add(createIntBin(203));
-        // encodeResults.add(createIntBin(252));
-
-        // encodeResults.add(createIntBin(130));
-        // encodeResults.add(createIntBin(240));
-        // encodeResults.add(createIntBin(470));
-        // encodeResults.add(createIntBin(60000));        
-        // encodeResults.add(createIntBin(2460000));
-        // encodeResults.add(createIntBin(245900000));
-        // encodeResults.add(createIntBin(2147483647));
-        
-        List<List<Integer>> test1 = VBEncodeBinList(createIntBin(240));
-        var test2 = VBEncodeBinList(createIntBin(470));
-        var test3 = VBEncodeBinList(createIntBin(60000));   
-        var test4 = VBEncodeBinList(createIntBin(8));   
-        var test5 = VBEncode(0);
-        var test6 = VBEncode(1);
-
-        List<List<List<Integer>>> encodes = new ArrayList<List<List<Integer>>>();
-        for (List<List<Integer>> lList: encodeResults){
-            encodes.add(VBEncodeBinList(lList));
-        }
-        for (List<List<Integer>> lList : encodes) {
-            List<Integer> binEncodes = new ArrayList<Integer>();
-            for (List<Integer> lBin : lList) {
-                Integer result = BinListToInteger(lBin);
-                binEncodes.add(result);
-            }
-            System.out.println(DecodeVariableByte(binEncodes));
-        }
-
-    }
     
-    //-------------------------------------------------------------------------
     public static List<Integer> VBEncode(Integer intArg){
         List<List<Integer>> encodedBinary = VBEncodeBinList(createIntBin(intArg));
         List<Integer> encode = new ArrayList<Integer>();
@@ -123,17 +62,13 @@ public class ByteUtils {
             int byteToInt = lbyte.intValue();
             List<Integer> temp = IntToBinList(byteToInt);
             results.add(temp);
-            //System.out.print(temp.toString() + " ");
-            //System.out.println(convertToBinary(lbyte));
         }
-        //System.out.println();
         return results;
     }
 
     public static List<List<Integer>> VBEncodeBinList(List<List<Integer>> binListArg){
         List<List<Integer>> result = new ArrayList<List<Integer>>();
         List<Integer> temp = new ArrayList<Integer>();
-        // System.out.println(binListArg.toString());
         for (List<Integer> lList : binListArg ){
             temp.addAll(lList);
         }
@@ -204,7 +139,6 @@ public class ByteUtils {
 
         for (List<Integer> lList : byteList){
             for (int i = 1; i < 8; i++){
-                int testVar = lList.get(i);
                 tempBinary.add(lList.get(i));
             }
         }
@@ -235,7 +169,6 @@ public class ByteUtils {
             intEncoding.add(value);
         }
         Integer result = IntFromByteEncoding(intEncoding);       
-        List<Integer> testAg = IntToBinList(result);
         return result;
     }
 
@@ -270,7 +203,6 @@ public class ByteUtils {
     }
 
     public static List<Integer> GetNextVariableBytes(DataInputStream dataInputStreamArg){
-        int MSB = 128;// 1000 0000
         List<Integer> result = new ArrayList<Integer>();
         Boolean continueReading = true;
         //This is what must change for variable byte encoding;
@@ -278,8 +210,7 @@ public class ByteUtils {
             try {
                 Integer currByte = dataInputStreamArg.read(); 
                 List<Integer> bits = IntToBinList(currByte);
-                while (bits.get(0) != 1){ // 0010 1001 
-                                               // 1000 0000
+                while (bits.get(0) != 1){ 
                     result.add(currByte);
                     currByte = dataInputStreamArg.read();
                     bits = IntToBinList(currByte);
@@ -331,11 +262,67 @@ public class ByteUtils {
         return resultArray;
     }   
 
-    //VBEncodeNumber(int n)
-
     public static void appendToArrayList(List<Byte> arrayArg, byte[] byteArg){
         for (byte lByte : byteArg){
             arrayArg.add(lByte);
         }
     }
 }
+
+//========================== Code Graveyard ==============
+//Here there be monsters
+/*
+private static ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+private static DataOutputStream byteOutStream = new DataOutputStream(byteArrayStream);
+
+public static void main(String[] args) {
+
+    
+    int num = 470;
+    byte[] result = convertIntToByteArray(num);
+
+    System.out.println("Input            : " + num);
+    for (Byte lbyte : result) {
+        String resStr = String.format("%8s", Integer.toBinaryString(lbyte & 0xFF)).replace(' ', '0');
+        System.out.print(resStr + " ");
+    }
+    //System.out.println("Byte Array (Hex) : " + convertBytesToHex(result));
+    
+
+    List<List<List<Integer>>> encodeResults = new ArrayList<List<List<Integer>>>();
+
+    
+    // encodeResults.add(createIntBin(173));
+    // encodeResults.add(createIntBin(203));
+    // encodeResults.add(createIntBin(252));
+
+    // encodeResults.add(createIntBin(130));
+    // encodeResults.add(createIntBin(240));
+    // encodeResults.add(createIntBin(470));
+    // encodeResults.add(createIntBin(60000));        
+    // encodeResults.add(createIntBin(2460000));
+    // encodeResults.add(createIntBin(245900000));
+    // encodeResults.add(createIntBin(2147483647));
+    
+    List<List<Integer>> test1 = VBEncodeBinList(createIntBin(240));
+    var test2 = VBEncodeBinList(createIntBin(470));
+    var test3 = VBEncodeBinList(createIntBin(60000));   
+    var test4 = VBEncodeBinList(createIntBin(8));   
+    var test5 = VBEncode(0);
+    var test6 = VBEncode(1);
+
+    List<List<List<Integer>>> encodes = new ArrayList<List<List<Integer>>>();
+    for (List<List<Integer>> lList: encodeResults){
+        encodes.add(VBEncodeBinList(lList));
+    }
+    for (List<List<Integer>> lList : encodes) {
+        List<Integer> binEncodes = new ArrayList<Integer>();
+        for (List<Integer> lBin : lList) {
+            Integer result = BinListToInteger(lBin);
+            binEncodes.add(result);
+        }
+        System.out.println(DecodeVariableByte(binEncodes));
+    }
+
+}
+*/

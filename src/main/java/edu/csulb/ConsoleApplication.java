@@ -40,7 +40,7 @@ public class ConsoleApplication {
 			System.out.print("Enter the existing index path:  ");
 			dirSelection = dirScanner.next();
 			corpus = DirectoryCorpus.loadMilestone1Directory(Paths.get(dirSelection).toAbsolutePath());
-			DiskIndexWriter.indexCorpus(corpus); //TODO - Fix, initialize corpus?
+			corpus.getDocuments();
 		}
 		
 		DiskPositionalIndex diskIndex = new DiskPositionalIndex(dirSelection);
@@ -50,7 +50,7 @@ public class ConsoleApplication {
 		String modeSelection = modeScanner.next();
 		boolean continueSearch = true;
 		while (continueSearch){
-			System.out.print("Please enter term to search, or enter \"v\" for vocab: ");
+			System.out.print("\nPlease enter term to search, or enter \"v\" for vocab: ");
 			String userTerm = inScanner.nextLine();
 			String query = userTerm;
 			query = query.toLowerCase();

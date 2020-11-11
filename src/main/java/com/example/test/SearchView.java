@@ -16,14 +16,16 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.NumberRenderer;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
 import org.apache.commons.io.IOUtils;
 import cecs429.documents.*;
+import cecs429.query.RankedRetrieval.DocumentScore;
 import cecs429.text.*;
 
 /**
@@ -36,6 +38,7 @@ public class SearchView extends VerticalLayout {
 	
 	VerticalLayout displayLayout;
 	Grid<Document> documentGrid;
+	Grid<DocumentScore> documentScoreGrid;
 	
 	public SearchView() {
 		
@@ -77,6 +80,7 @@ public class SearchView extends VerticalLayout {
 	    RadioButtonGroup<String> queryModeRadioGroup = new RadioButtonGroup<>();
 	    queryModeRadioGroup.setLabel("Select a Query Mode:");
 	    queryModeRadioGroup.setItems("Boolean", "Ranked");
+	    queryModeRadioGroup.setValue("Boolean");
 	    queryModeRadioGroup.getStyle().set("white-space","nowrap");
 
 	    // Initialize directory button
@@ -88,16 +92,7 @@ public class SearchView extends VerticalLayout {
 	    Button vocabButton = new Button("Display Vocab",
 	            e -> {
 	            	
-	            	if(displayLayout != null) {
-	            		remove(displayLayout);
-	            		displayLayout = null;
-	            	}
-	            	
-	            	if(documentGrid != null) {
-	            		remove(documentGrid);
-	            		documentGrid = null;
-	            	}
-	            	
+	            	cleanUpUI();
 	            	
 	            	if(displayLayout == null) {
 		            	displayLayout = new VerticalLayout();
@@ -124,15 +119,7 @@ public class SearchView extends VerticalLayout {
 	    Button searchButton = new Button(searchIcon,
 	            e -> {
 	            	
-	            	if(displayLayout != null) {
-	            		remove(displayLayout);
-	            		displayLayout = null;
-	            	}
-	            	
-	            	if(documentGrid != null) {
-	            		remove(documentGrid);
-	            		documentGrid = null;
-	            	}
+	            	cleanUpUI();
 	            	
 	            	// Query field empty check
 	            	if (queryField.getValue().isEmpty()) {
@@ -143,50 +130,105 @@ public class SearchView extends VerticalLayout {
 	            		add(displayLayout);
 	            		
 	            	} else {
-	            		List<Document> documents = new ArrayList<>();
-		            	documents = service.search(queryField.getValue());
-		            	if(!documents.isEmpty()) {
-		            		displayLayout = new VerticalLayout();
-		    		        displayLayout.setAlignItems(FlexComponent.Alignment.START);
-		    		        displayLayout.setPadding(false);
-		            		documentGrid = new Grid<>();
-			            	documentGrid.setItems(documents);
-		    		        Span numDocsLabel = new Span("Number of Documents: " + String.valueOf(documents.size()));	
-		            		displayLayout.add(numDocsLabel);
-			            	documentGrid.addColumn(Document::getTitle).setHeader("Document Title");
-			            	documentGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER,
-			            	        GridVariant.LUMO_NO_ROW_BORDERS, GridVariant.LUMO_ROW_STRIPES);
-			            	
-			            	// Add a listener for the document grid
-			            	// If the user selects a document, a dialog box will display its content
-			            	documentGrid.asSingleSelect().addValueChangeListener(event -> {
-			            		Dialog dialog = new Dialog();
+	            		
+	            		if(queryModeRadioGroup.getValue().equals("Boolean")) {
+	            			List<Document> documents = new ArrayList<>();
+			            	documents = service.searchBoolean(queryField.getValue());
+			            	if(!documents.isEmpty()) {
+			            		displayLayout = new VerticalLayout();
+			    		        displayLayout.setAlignItems(FlexComponent.Alignment.START);
+			    		        displayLayout.setPadding(false);
+			            		documentGrid = new Grid<>();
+				            	documentGrid.setItems(documents);
+			    		        Span numDocsLabel = new Span("Number of Documents: " + String.valueOf(documents.size()));	
+			            		displayLayout.add(numDocsLabel);
+				            	documentGrid.addColumn(Document::getTitle).setHeader("Document Title");
+				            	documentGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER,
+				            	        GridVariant.LUMO_NO_ROW_BORDERS, GridVariant.LUMO_ROW_STRIPES);
+				            	
+				            	// Add a listener for the document grid
+				            	// If the user selects a document, a dialog box will display its content
+				            	documentGrid.asSingleSelect().addValueChangeListener(event -> {
+				            		Dialog dialog = new Dialog();
 
-			                    try {
-			                    	VerticalLayout dialogDisplay = new VerticalLayout();
-			                    	Span documentTitle = new Span(event.getValue().getTitle());
-			                    	documentTitle.getElement().getStyle().set("font-weight", "bold");
-									String content = IOUtils.toString(event.getValue().getContent());
-									Span documentContent = new Span(content);
-									
-									dialogDisplay.add(documentTitle, documentContent);
-									dialog.add(dialogDisplay);
-									dialog.setWidth("1000px");
-				            		dialog.setHeight("750px");
-				            		dialog.open();
-								} catch (IOException e1) {
-									// TODO Auto-generated catch block
-									e1.printStackTrace();
-								}
-			            	});
-			            	add(documentGrid, displayLayout);
-		            	} else {
-		            		displayLayout = new VerticalLayout();
-		    		        displayLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-		    		        Span notFoundLabel = new Span("Not Found. Please try entering another query.");	
-		            		displayLayout.add(notFoundLabel);
-		            		add(displayLayout);
-		            	}
+				                    try {
+				                    	VerticalLayout dialogDisplay = new VerticalLayout();
+				                    	Span documentTitle = new Span(event.getValue().getTitle());
+				                    	documentTitle.getElement().getStyle().set("font-weight", "bold");
+										String content = IOUtils.toString(event.getValue().getContent());
+										Span documentContent = new Span(content);
+										
+										dialogDisplay.add(documentTitle, documentContent);
+										dialog.add(dialogDisplay);
+										dialog.setWidth("1000px");
+					            		dialog.setHeight("750px");
+					            		dialog.open();
+									} catch (IOException e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
+				            	});
+				            	add(documentGrid, displayLayout);
+			            	} else {
+			            		displayLayout = new VerticalLayout();
+			    		        displayLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+			    		        Span notFoundLabel = new Span("Not Found. Please try entering another query.");	
+			            		displayLayout.add(notFoundLabel);
+			            		add(displayLayout);
+			            	}
+	            		} else if (queryModeRadioGroup.getValue().equals("Ranked")) {
+	            			PriorityQueue<DocumentScore> documents = new PriorityQueue<>();
+	            			documents = service.searchRanked(queryField.getValue());
+	            			
+	            			if(!documents.isEmpty()) {
+	            				
+	            				displayLayout = new VerticalLayout();
+	            				displayLayout.setAlignItems(FlexComponent.Alignment.START);
+			    		        displayLayout.setPadding(false);
+			    		        
+			            		documentScoreGrid = new Grid<>();
+				            	documentScoreGrid.setItems(documents);
+			    		        Span numDocsLabel = new Span("Number of Documents: " + String.valueOf(documents.size()));	
+			            		displayLayout.add(numDocsLabel);
+				            	documentScoreGrid.addColumn(DocumentScore::getTitle).setHeader("Document Title");
+				            	documentScoreGrid.addColumn(new NumberRenderer<>(DocumentScore::getScore, "%.5f")).setHeader("Accumulator Value");
+				            	documentScoreGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER,
+				            	        GridVariant.LUMO_NO_ROW_BORDERS, GridVariant.LUMO_ROW_STRIPES);
+				            	
+				            	// Add a listener for the document grid
+				            	// If the user selects a document, a dialog box will display its content
+				            	documentScoreGrid.asSingleSelect().addValueChangeListener(event -> {
+				            		Dialog dialog = new Dialog();
+
+				                    try {
+				                    	VerticalLayout dialogDisplay = new VerticalLayout();
+				                    	Span documentTitleScore = new Span(event.getValue().getTitle() + " (Score: " + event.getValue().getScore() + ")");
+				                    	documentTitleScore.getElement().getStyle().set("font-weight", "bold");
+										String content = IOUtils.toString(event.getValue().getContent());
+										Span documentContent = new Span(content);
+										
+										dialogDisplay.add(documentTitleScore, documentContent);
+										dialog.add(dialogDisplay);
+										dialog.setWidth("1000px");
+					            		dialog.setHeight("750px");
+					            		dialog.open();
+									} catch (IOException e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
+				            	});
+				            	
+				            	add(documentScoreGrid, displayLayout);
+			            	} else {
+			            		displayLayout = new VerticalLayout();
+			    		        displayLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+			    		        Span notFoundLabel = new Span("Not Found. Please try entering another query.");	
+			            		displayLayout.add(notFoundLabel);
+			            		add(displayLayout);
+			            	}
+	    			        
+	            		}
+	            		
 	            	}
 	            	
 	            });
@@ -195,15 +237,7 @@ public class SearchView extends VerticalLayout {
 	    Button stemButton = new Button(stemmerIcon, 
 	    		e -> {
 	    			
-	    			if(displayLayout != null) {
-	            		remove(displayLayout);
-	            		displayLayout = null;
-	            	}
-	            	
-	            	if(documentGrid != null) {
-	            		remove(documentGrid);
-	            		documentGrid = null;
-	            	}
+	    			cleanUpUI();
 	            	
 	            	displayLayout = new VerticalLayout();
     		        displayLayout.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -252,6 +286,24 @@ public class SearchView extends VerticalLayout {
 	    add(vLayoutSearch);
 	}
 	
+	/**
+	 * Remove existing layouts/grids before placing new ones
+	 * */
+	public void cleanUpUI() {
+		if(displayLayout != null) {
+    		remove(displayLayout);
+    		displayLayout = null;
+    	}
+    	
+    	if(documentGrid != null) {
+    		remove(documentGrid);
+    		documentGrid = null;
+    	}
+    	
+    	if(documentScoreGrid != null) {
+    		remove(documentScoreGrid);
+    		documentScoreGrid = null;
+    	}
+	}
 	
-
 }
