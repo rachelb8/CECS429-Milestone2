@@ -25,6 +25,14 @@ public class RankedRetrieval {
 	
 	Integer DOCS_RETURNED = 10;
 	DocumentCorpus corpusLocal;
+	
+	/**
+	 * Ranked retrieval method
+	 * @param corpus - corpus
+	 * @param diskIndex - disk positional index
+	 * @param queryString - query given by user 
+	 * @return PriorityQueue with the highest scored documents
+	 */
     public PriorityQueue<DocumentScore> rankQuery(DocumentCorpus corpus, DiskPositionalIndex diskIndex, String queryString){
     	corpusLocal = corpus;
     	MSOneTokenProcessor mTokenProcessor = new MSOneTokenProcessor();
@@ -58,13 +66,11 @@ public class RankedRetrieval {
         }
         
         PriorityQueue<DocumentScore> pq = new PriorityQueue<DocumentScore>();
-        
         for (DocumentScore docScore: accumulator) {
         	Double Ld = diskIndex.getDocWeight(docScore.getDocID());
         	if (docScore.getScore() != 0.0) {
         		Double originalScore = docScore.getScore();
         		docScore.setScore(originalScore/Ld);
-        		System.out.println("");
         	}
         	pq.add(docScore);
         }
@@ -72,22 +78,21 @@ public class RankedRetrieval {
         // Only return top 10 documents
         PriorityQueue<DocumentScore> pqHighest = new PriorityQueue<DocumentScore>();
         
-        if(pq.size() < DOCS_RETURNED) {
-        	return pq;
+        DocumentScore docScore = null;
+        while((docScore= pq.poll()) != null) {
+        	pqHighest.add(docScore); 
+    		if(pqHighest.size() == DOCS_RETURNED) {
+    			return pqHighest;
+    		}
         }
-        
-        int counter = 0;
-        while (counter < DOCS_RETURNED) {
-        	DocumentScore docScore = pq.poll();
-        	if(docScore != null) {
-        		pqHighest.add(docScore); 
-        		counter++;
-        	}
-        }
-         
         return pqHighest;
+
     }
 
+    /**
+     * DocumentScore class - helps keep track of Accumulator values
+     *
+     */
 	public class DocumentScore implements Comparable<DocumentScore> {
         private Integer  docID;
         private Double score;
@@ -127,7 +132,7 @@ public class RankedRetrieval {
         }
 		
 		public String toString() {
-			return String.format("%d %s (Accumulator Value: %.5f)" , docID, corpusLocal.getDocument(docID).getTitle(), score);
+			return String.format("%d %s (Accumulator Value: %.5f)" , docID, getTitle(), score);
 		}
     }
 }

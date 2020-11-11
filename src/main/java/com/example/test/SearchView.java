@@ -16,14 +16,13 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.NumberRenderer;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-
 import org.apache.commons.io.IOUtils;
 import cecs429.documents.*;
 import cecs429.query.RankedRetrieval.DocumentScore;
@@ -93,21 +92,7 @@ public class SearchView extends VerticalLayout {
 	    Button vocabButton = new Button("Display Vocab",
 	            e -> {
 	            	
-	            	if(displayLayout != null) {
-	            		remove(displayLayout);
-	            		displayLayout = null;
-	            	}
-	            	
-	            	if(documentGrid != null) {
-	            		remove(documentGrid);
-	            		documentGrid = null;
-	            	}
-	            	
-	            	if(documentScoreGrid != null) {
-	            		remove(documentScoreGrid);
-	            		documentScoreGrid = null;
-	            	}
-	            	
+	            	cleanUpUI();
 	            	
 	            	if(displayLayout == null) {
 		            	displayLayout = new VerticalLayout();
@@ -134,20 +119,7 @@ public class SearchView extends VerticalLayout {
 	    Button searchButton = new Button(searchIcon,
 	            e -> {
 	            	
-	            	if(displayLayout != null) {
-	            		remove(displayLayout);
-	            		displayLayout = null;
-	            	}
-	            	
-	            	if(documentGrid != null) {
-	            		remove(documentGrid);
-	            		documentGrid = null;
-	            	}
-	            	
-	            	if(documentScoreGrid != null) {
-	            		remove(documentScoreGrid);
-	            		documentScoreGrid = null;
-	            	}
+	            	cleanUpUI();
 	            	
 	            	// Query field empty check
 	            	if (queryField.getValue().isEmpty()) {
@@ -209,15 +181,17 @@ public class SearchView extends VerticalLayout {
 	            			documents = service.searchRanked(queryField.getValue());
 	            			
 	            			if(!documents.isEmpty()) {
-			            		displayLayout = new VerticalLayout();
-			    		        displayLayout.setAlignItems(FlexComponent.Alignment.START);
+	            				
+	            				displayLayout = new VerticalLayout();
+	            				displayLayout.setAlignItems(FlexComponent.Alignment.START);
 			    		        displayLayout.setPadding(false);
+			    		        
 			            		documentScoreGrid = new Grid<>();
 				            	documentScoreGrid.setItems(documents);
 			    		        Span numDocsLabel = new Span("Number of Documents: " + String.valueOf(documents.size()));	
 			            		displayLayout.add(numDocsLabel);
 				            	documentScoreGrid.addColumn(DocumentScore::getTitle).setHeader("Document Title");
-				            	documentScoreGrid.addColumn(DocumentScore::getScore).setHeader("Accumulator Value");
+				            	documentScoreGrid.addColumn(new NumberRenderer<>(DocumentScore::getScore, "%.5f")).setHeader("Accumulator Value");
 				            	documentScoreGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER,
 				            	        GridVariant.LUMO_NO_ROW_BORDERS, GridVariant.LUMO_ROW_STRIPES);
 				            	
@@ -243,6 +217,7 @@ public class SearchView extends VerticalLayout {
 										e1.printStackTrace();
 									}
 				            	});
+				            	
 				            	add(documentScoreGrid, displayLayout);
 			            	} else {
 			            		displayLayout = new VerticalLayout();
@@ -262,20 +237,7 @@ public class SearchView extends VerticalLayout {
 	    Button stemButton = new Button(stemmerIcon, 
 	    		e -> {
 	    			
-	    			if(displayLayout != null) {
-	            		remove(displayLayout);
-	            		displayLayout = null;
-	            	}
-	            	
-	            	if(documentGrid != null) {
-	            		remove(documentGrid);
-	            		documentGrid = null;
-	            	}
-	            	
-	            	if(documentScoreGrid != null) {
-	            		remove(documentScoreGrid);
-	            		documentScoreGrid = null;
-	            	}
+	    			cleanUpUI();
 	            	
 	            	displayLayout = new VerticalLayout();
     		        displayLayout.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -322,6 +284,26 @@ public class SearchView extends VerticalLayout {
 
 	    // Add layout to the view
 	    add(vLayoutSearch);
+	}
+	
+	/**
+	 * Remove existing layouts/grids before placing new ones
+	 * */
+	public void cleanUpUI() {
+		if(displayLayout != null) {
+    		remove(displayLayout);
+    		displayLayout = null;
+    	}
+    	
+    	if(documentGrid != null) {
+    		remove(documentGrid);
+    		documentGrid = null;
+    	}
+    	
+    	if(documentScoreGrid != null) {
+    		remove(documentScoreGrid);
+    		documentScoreGrid = null;
+    	}
 	}
 	
 }

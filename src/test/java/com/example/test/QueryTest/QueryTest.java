@@ -12,8 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import cecs429.documents.Document;
-import cecs429.index.PositionalInvertedIndex;
-import cecs429.query.Query;
 
 
 public class QueryTest {
@@ -22,7 +20,8 @@ public class QueryTest {
     @Before
     public void Initialize(){
         testIndServ = new IndexerService();
-        long queryTime = testIndServ.runNew("Gibberish");
+        @SuppressWarnings("unused")
+		long queryTime = testIndServ.runNew("Gibberish");
     } 
 
     @Test
@@ -43,8 +42,7 @@ public class QueryTest {
     @Test
     public void AndNullTest(){
         List<Document> nullResult = testIndServ.searchBoolean("Heirophant Green");
-        Object[] emptyArray = {};
-        List<Document> allResult = testIndServ.searchBoolean("The World");       
+        Object[] emptyArray = {};     
         assertArrayEquals(nullResult.toArray(), emptyArray);
         
         

@@ -50,7 +50,7 @@ public class ConsoleApplication {
 		String modeSelection = modeScanner.next();
 		boolean continueSearch = true;
 		while (continueSearch){
-			System.out.print("Please enter term to search, or enter \"v\" for vocab: ");
+			System.out.print("\nPlease enter term to search, or enter \"v\" for vocab: ");
 			String userTerm = inScanner.nextLine();
 			String query = userTerm;
 			query = query.toLowerCase();
