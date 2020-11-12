@@ -50,10 +50,11 @@ public class DiskPositionalIndex implements Index {
 	        Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
 	        Integer lastDocIDSum = 0;            
 	        for (int j = 0; j < docFrequency; j++){
-	            Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);
-	            lastDocIDSum = lastDocIDSum + docGapInt;
-	            Integer docId = lastDocIDSum;
-	            Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
+                List<Integer> docGapEncode = ByteUtils.GetNextVariableBytes(dataInStrm);
+                Integer docGapInt = ByteUtils.DecodeVariableByte(docGapEncode);
+                lastDocIDSum = lastDocIDSum + docGapInt;
+                Integer docId = lastDocIDSum;
+                Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
 	            Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);            
 	            for (int k = 0; k < termFrequency; k++){
 	                 
@@ -97,10 +98,11 @@ public class DiskPositionalIndex implements Index {
 	        Integer docFrequency = ByteUtils.DecodeNextInt(dataInStrm);
 	        Integer lastDocIDSum = 0;            
 	        for (int j = 0; j < docFrequency; j++){
-	        	Integer docGapInt = ByteUtils.DecodeNextInt(dataInStrm);            
-	            lastDocIDSum = lastDocIDSum + docGapInt;
-	            Integer docId = lastDocIDSum;
-	            @SuppressWarnings("unused")
+                List<Integer> docGapEncode = ByteUtils.GetNextVariableBytes(dataInStrm);
+                Integer docGapInt = ByteUtils.DecodeVariableByte(docGapEncode);
+                lastDocIDSum = lastDocIDSum + docGapInt;
+                Integer docId = lastDocIDSum;
+                @SuppressWarnings("unused")
 				Double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
 	            Integer termFrequency = ByteUtils.DecodeNextInt(dataInStrm);
 	            List<Integer> positionList = new ArrayList<Integer>();

@@ -50,8 +50,9 @@ public class BinReader {
             System.out.println("Doc Freq - " + docFreq);
             int docIDSum = 0;
             for (int i = 0; i < docFreq; i++){
-                int docGap = ByteUtils.DecodeNextInt(dataInStrm);
-                docIDSum = docIDSum + docGap;
+                List<Integer> docGapEncode = ByteUtils.GetNextVariableBytes(dataInStrm);
+                Integer docGapInt = ByteUtils.DecodeVariableByte(docGapEncode);
+                docIDSum = docIDSum + docGapInt;
                 System.out.println("Doc ID  - " + docIDSum);
                 double docScore = ByteUtils.DecodeNextDouble(dataInStrm);
                 System.out.println("Doc Score - " + docScore);

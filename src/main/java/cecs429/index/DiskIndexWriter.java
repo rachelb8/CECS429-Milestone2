@@ -67,10 +67,14 @@ public class DiskIndexWriter {
             ByteUtils.appendToArrayList(toBeBytes, DocFreqByteArray);
             
             for (int m = 0; m < docsGapsList.size(); m++) {
-                //Add Doc ID gap
-                Integer docIDGap = docsGapsList.get(m);                
-                byte[] DocIdGapByte = ByteUtils.getByteArray(docIDGap);
-                ByteUtils.appendToArrayList(toBeBytes, DocIdGapByte);    
+                //Add Doc ID gap as VB encode
+                Integer docIDGap = docsGapsList.get(m);
+                List<Integer> docGapEncode = ByteUtils.VBEncode(docIDGap);
+                byte[] singleDocByte = new byte[1];
+                for (Integer dInt: docGapEncode){
+                    singleDocByte[0] = ByteUtils.getByte(dInt);
+                    ByteUtils.appendToArrayList(toBeBytes, singleDocByte);
+                }                    
                 byte[] scoreByte = ByteUtils.getByteArray(scoreList.get(m));
                 ByteUtils.appendToArrayList(toBeBytes, scoreByte);    
                 List<Integer> postingGaps = posGapsLists.get(m);
