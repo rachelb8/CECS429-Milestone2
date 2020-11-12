@@ -58,7 +58,7 @@ public class RankedRetrieval {
             	DocumentScore docScore = accumulator.stream().filter(doc -> docID.equals(doc.getDocID())).findFirst().orElse(null);
             	if(docScore != null) {
             		double originalScore = docScore.getScore();
-            		docScore.setScore(originalScore + wdt);
+            		docScore.setScore(originalScore + (wqt * wdt));
             	} else {
             		accumulator.add(new DocumentScore(docID, wdt * wqt));
             	}
