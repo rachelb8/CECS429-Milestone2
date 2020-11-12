@@ -66,6 +66,7 @@ public class ConsoleApplication {
 							for (Posting p : myQueryPostings) {
 								System.out.println("Document " + p.getDocumentId() + ": " + corpus.getDocument(p.getDocumentId()).getTitle());
 							}
+							System.out.println("Number of Documents: " + myQueryPostings.size());
 							System.out.println();
 						}
 						else {

@@ -44,13 +44,13 @@ public class PhraseLiteral implements Query {
 		int listPtr1 = 0;
 		int listPtr2 = 0;
 		while (list1 != null && list2 != null) {
-			if (listPtr1 == list1.size()-1 || listPtr2 == list2.size()-1) {
+			if (listPtr1 == list1.size() || listPtr2 == list2.size()) {
 				break;
 			} else if (list1.get(listPtr1).getDocumentId() == list2.get(listPtr2).getDocumentId()) {
 				int posPtr1 = 0;
 				int posPtr2 = 0;
 				while (list1.get(listPtr1).getPositions() != null && list2.get(listPtr2).getPositions() != null) {
-					if (posPtr1 == list1.get(listPtr1).getPositions().size()-1 || posPtr2 == list2.get(listPtr2).getPositions().size()-1) {
+					if (posPtr1 == list1.get(listPtr1).getPositions().size() || posPtr2 == list2.get(listPtr2).getPositions().size()) {
 						++listPtr1;
 						++listPtr2;
 						break;
